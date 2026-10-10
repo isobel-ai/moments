@@ -7,10 +7,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
 import { colors, fonts, makeWaveformBars } from '@moments/ui';
 import { Waveform, PlayerSheet, PaperGrain } from '@moments/ui';
 import type { Moment } from '@moments/types';
 import { getMoment } from '../lib/moments';
+import { getSignedAudioUrl } from '../lib/audio';
 
 export interface PlayerScreenProps {
   momentId?: string;
@@ -87,6 +89,20 @@ function PauseIcon() {
   );
 }
 
+function PlayIcon() {
+  return (
+    <Svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M8 5 L19 12 L8 19 Z"
+        stroke={colors.playerControl}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 const sections = [
   { type: 'notes' as const, title: 'Notes', preview: '3 notes saved', time: '04:32' },
   { type: 'scripture' as const, title: 'Scripture', preview: 'Psalm 42:1 · As the deer pants for streams of water…' },
@@ -117,6 +133,20 @@ export function PlayerScreen({ momentId, onBack, onAddMore }: PlayerScreenProps)
   const insets = useSafeAreaInsets();
   const [expanded, setExpanded] = useState(false);
   const [moment, setMoment] = useState<Moment | null>(null);
+  const [signedUrl, setSignedUrl] = useState<string>();
+  const [error, setError] = useState<string>();
+
+  const player = useAudioPlayer(null);
+  const status = useAudioPlayerStatus(player);
+
+  useEffect(() => {
+    // Ensure the audio session is configured for playback (not recording), so
+    // audio is audible even when the device is in silent mode and routes through
+    // the speaker rather than the earpiece.
+    setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false }).catch(
+      () => {},
+    );
+  }, []);
 
   useEffect(() => {
     if (!momentId) return;
@@ -133,9 +163,50 @@ export function PlayerScreen({ momentId, onBack, onAddMore }: PlayerScreenProps)
     };
   }, [momentId]);
 
+  useEffect(() => {
+    const path = moment?.audio.path;
+    if (!path) return;
+    let cancelled = false;
+    setError(undefined);
+    getSignedAudioUrl(path)
+      .then((url) => {
+        if (!cancelled) setSignedUrl(url);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(String(err));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [moment?.audio.path]);
+
+  useEffect(() => {
+    if (signedUrl) {
+      player.replace({ uri: signedUrl });
+    }
+  }, [signedUrl, player]);
+
+  const togglePlay = () => {
+    if (!signedUrl || !status.isLoaded) return;
+    if (status.playing) {
+      player.pause();
+    } else {
+      player.play();
+    }
+  };
+
+  const seekBy = (seconds: number) => {
+    if (!status.isLoaded || status.duration <= 0) return;
+    const target = Math.max(0, Math.min(status.duration, status.currentTime + seconds));
+    player.seekTo(target);
+  };
+
   const title = moment?.title ?? 'Saturday morning worship';
   const date = moment ? formatDate(moment.date) : '10 October 2026';
-  const duration = moment ? formatDuration(moment.audio.duration) : '12:46';
+  const durationSeconds = status.duration > 0 ? status.duration : (moment?.audio.duration ?? 0);
+  const duration = formatDuration(durationSeconds);
+  const currentTime = formatDuration(status.currentTime);
+  const progress = durationSeconds > 0 ? Math.min(1, status.currentTime / durationSeconds) : 0;
 
   const bars = makeWaveformBars(64, 200, 5, colors.playerBar, {
     frequency: 1.6,
@@ -145,7 +216,7 @@ export function PlayerScreen({ momentId, onBack, onAddMore }: PlayerScreenProps)
     waveFrequency: 1.2,
     wavePhase: 0.3,
     minHeight: 6,
-    playhead: 0.355,
+    playhead: progress,
     playedOpacity: 1,
     unplayedOpacity: 0.28,
   });
@@ -186,39 +257,46 @@ export function PlayerScreen({ momentId, onBack, onAddMore }: PlayerScreenProps)
           gap={2}
           paddingHorizontal={28}
         />
-        <View style={styles.progress} />
+        <View style={[styles.progress, { width: `${progress * 100}%` }]} />
         <View style={[styles.marker, { left: '64.8%' }]} />
         <View style={[styles.marker, { left: '87.2%' }]} />
       </View>
 
       <View style={styles.times}>
-        <Text style={styles.time}>04:32</Text>
-        <Text style={styles.time}>12:46</Text>
+        <Text style={styles.time}>{currentTime}</Text>
+        <Text style={styles.time}>{duration}</Text>
       </View>
 
       <View style={styles.controls}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Back 15 seconds"
+          onPress={() => seekBy(-15)}
           style={styles.control}
         >
           <Back15Icon />
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Pause"
+          accessibilityLabel={status.playing ? 'Pause' : 'Play'}
+          onPress={togglePlay}
           style={styles.control}
         >
-          <PauseIcon />
+          {status.playing ? <PauseIcon /> : <PlayIcon />}
         </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Forward 15 seconds"
+          onPress={() => seekBy(15)}
           style={styles.control}
         >
           <Forward15Icon />
         </Pressable>
       </View>
+
+      {error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : null}
 
       <View style={styles.secondary}>
         <Text style={styles.secondaryText}>1x</Text>
@@ -304,6 +382,14 @@ const styles = StyleSheet.create({
     fontFamily: fonts.ui,
     fontSize: 13,
     color: colors.playerTime,
+  },
+  errorText: {
+    fontFamily: fonts.ui,
+    fontSize: 13,
+    color: colors.danger,
+    textAlign: 'center',
+    marginTop: 16,
+    paddingHorizontal: 28,
   },
   controls: {
     flexDirection: 'row',
