@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,20 +12,25 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { colors, fonts, makeMiniBars } from '@moments/ui';
 import { BottomNav, PaperGrain, Waveform } from '@moments/ui';
+import type { Moment, MomentType } from '@moments/types';
+import { listMoments } from '../lib/moments';
 
 export interface CollectionsScreenProps {
   onBack: () => void;
-  onOpenMoment: () => void;
+  onOpenMoment: (momentId: string) => void;
   onRecord: () => void;
   onImport: () => void;
 }
 
-const moments = [
-  { title: 'Saturday morning worship', date: '10 October 2026', duration: '12:46', privacy: 'Private' },
-  { title: 'Quiet time', date: '8 October 2026', duration: '08:12', privacy: 'Private' },
-  { title: 'Night prayer', date: '6 October 2026', duration: '09:15', privacy: 'Private' },
-  { title: 'Spontaneous flow', date: '4 October 2026', duration: '06:40', privacy: 'Private' },
-  { title: 'Sunday worship', date: '2 October 2026', duration: '14:02', privacy: 'Private' },
+const FILTERS: { label: string; value: MomentType | 'all' }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Quiet time', value: 'quiet_time' },
+  { label: 'Prayer', value: 'prayer' },
+  { label: 'Living room', value: 'living_room' },
+  { label: 'Conference', value: 'conference' },
+  { label: 'Spontaneous', value: 'spontaneous' },
+  { label: 'Worship', value: 'worship' },
+  { label: 'Other', value: 'other' },
 ];
 
 function BackIcon() {
@@ -55,6 +61,22 @@ function Arrow() {
   );
 }
 
+function formatDate(date: string): string {
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return date;
+  return d.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 /**
  * Collections (S10.dc.html): search, filter, list of Moment cards, bottom nav.
  */
@@ -65,6 +87,46 @@ export function CollectionsScreen({
   onImport,
 }: CollectionsScreenProps) {
   const insets = useSafeAreaInsets();
+
+  const [moments, setMoments] = useState<Moment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<MomentType | 'all'>('all');
+  const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    listMoments()
+      .then((data) => {
+        if (active) {
+          setMoments(data);
+          setError(null);
+        }
+      })
+      .catch((err) => {
+        if (active) setError(err.message ?? 'Could not load your Moments.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const visibleMoments = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return moments.filter((moment) => {
+      const matchesQuery = q === '' || moment.title.toLowerCase().includes(q);
+      const matchesFilter = filter === 'all' || moment.type === filter;
+      return matchesQuery && matchesFilter;
+    });
+  }, [moments, query, filter]);
+
+  const toggleFilter = useCallback((value: MomentType | 'all') => {
+    setFilter(value);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -89,49 +151,102 @@ export function CollectionsScreen({
           placeholder="Search"
           placeholderTextColor={colors.placeholder}
           style={styles.search}
+          value={query}
+          onChangeText={setQuery}
+          autoCorrect={false}
+          returnKeyType="search"
         />
         <Pressable
           accessibilityRole="button"
-          style={styles.filter}
+          accessibilityLabel="Filter"
+          onPress={() => setShowFilters((s) => !s)}
+          style={[styles.filter, showFilters && styles.filterActive]}
         >
           <Text style={styles.filterText}>Filter</Text>
         </Pressable>
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.list}
-      >
-        {moments.map((moment, index) => (
-          <Pressable
-            key={moment.title}
-            accessibilityRole="button"
-            onPress={onOpenMoment}
-            style={styles.card}
-          >
-            <View style={styles.thumb}>
-              <Waveform
-                bars={makeMiniBars(12, 40, index + 1, colors.collectionsCardWave, {
-                  wave: 4,
-                  minHeight: 3,
-                })}
-                height={40}
-                barWidth={2}
-                gap={2}
-              />
-            </View>
-            <View style={styles.cardBody}>
-              <Text style={styles.cardTitle} numberOfLines={1}>
-                {moment.title}
-              </Text>
-              <Text style={styles.cardMeta}>
-                {moment.date} · {moment.duration} · {moment.privacy}
-              </Text>
-            </View>
-            <Arrow />
-          </Pressable>
-        ))}
-      </ScrollView>
+      {showFilters && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+        >
+          {FILTERS.map((item) => {
+            const active = filter === item.value;
+            return (
+              <Pressable
+                key={item.value}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                onPress={() => toggleFilter(item.value)}
+                style={[styles.chip, active && styles.chipActive]}
+              >
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                  {item.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      )}
+
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.cobalt} />
+        </View>
+      ) : error ? (
+        <View style={styles.center}>
+          <Text style={styles.emptyTitle}>Something went wrong</Text>
+          <Text style={styles.emptyText}>{error}</Text>
+        </View>
+      ) : visibleMoments.length === 0 ? (
+        <View style={styles.center}>
+          <Text style={styles.emptyTitle}>
+            {moments.length === 0 ? 'No Moments yet' : 'No matches'}
+          </Text>
+          <Text style={styles.emptyText}>
+            {moments.length === 0
+              ? 'Record or import a Moment to see it here.'
+              : 'Try a different search or filter.'}
+          </Text>
+        </View>
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.list}
+        >
+          {visibleMoments.map((moment, index) => (
+            <Pressable
+              key={moment.id}
+              accessibilityRole="button"
+              onPress={() => onOpenMoment(moment.id)}
+              style={styles.card}
+            >
+              <View style={styles.thumb}>
+                <Waveform
+                  bars={makeMiniBars(12, 40, index + 1, colors.collectionsCardWave, {
+                    wave: 4,
+                    minHeight: 3,
+                  })}
+                  height={40}
+                  barWidth={2}
+                  gap={2}
+                />
+              </View>
+              <View style={styles.cardBody}>
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                  {moment.title}
+                </Text>
+                <Text style={styles.cardMeta}>
+                  {formatDate(moment.date)} · {formatDuration(moment.audio.duration)}
+                </Text>
+              </View>
+              <Arrow />
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
 
       <View style={[styles.nav, { paddingBottom: insets.bottom + 8 }]}>
         <BottomNav
@@ -202,10 +317,57 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  filterActive: {
+    borderColor: colors.cobalt,
+    backgroundColor: colors.paleBlue,
+  },
   filterText: {
     fontFamily: fonts.uiMedium,
     fontSize: 13,
     color: colors.cobalt,
+  },
+  filterRow: {
+    paddingHorizontal: 28,
+    paddingTop: 14,
+    gap: 8,
+  },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.collectionsFilterBorder,
+    backgroundColor: colors.collectionsFilterBg,
+  },
+  chipActive: {
+    borderColor: colors.cobalt,
+    backgroundColor: colors.paleBlue,
+  },
+  chipText: {
+    fontFamily: fonts.ui,
+    fontSize: 13,
+    color: colors.collectionsCardMeta,
+  },
+  chipTextActive: {
+    color: colors.cobalt,
+  },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+    gap: 8,
+  },
+  emptyTitle: {
+    fontFamily: fonts.heading,
+    fontSize: 20,
+    color: colors.collectionsCardTitle,
+  },
+  emptyText: {
+    fontFamily: fonts.ui,
+    fontSize: 14,
+    color: colors.collectionsCardMeta,
+    textAlign: 'center',
   },
   list: {
     paddingHorizontal: 28,

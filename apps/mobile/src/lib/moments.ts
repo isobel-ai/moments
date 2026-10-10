@@ -5,25 +5,61 @@ import { supabase } from './supabase';
 const MOMENTS_TABLE = 'moments';
 const AUDIO_TABLE = 'moments_audio';
 
+/**
+ * Normalises a raw `moments` row (with its nested `moments_audio` relation) into
+ * the `Moment` domain shape. Audio lives in a separate table, so we pull it out
+ * of the nested relation and attach it to the `audio` field.
+ */
+function normalizeMoment(row: Record<string, unknown>): Moment {
+  const audioRow = Array.isArray(row.moments_audio)
+    ? row.moments_audio[0]
+    : row.moments_audio;
+
+  const { moments_audio, ...moment } = row;
+
+  return {
+    ...moment,
+    audio: audioRow
+      ? {
+          path: audioRow.storage_path,
+          fileName: audioRow.file_name,
+          format: audioRow.format,
+          duration: audioRow.duration,
+          size: audioRow.size,
+          waveform: audioRow.waveform,
+          transcribed: audioRow.transcribed,
+          transcript: audioRow.transcript,
+        }
+      : {
+          path: '',
+          fileName: '',
+          format: 'm4a',
+          duration: 0,
+          size: 0,
+          transcribed: false,
+        },
+  } as Moment;
+}
+
 export async function listMoments(): Promise<Moment[]> {
   const { data, error } = await supabase
     .from(MOMENTS_TABLE)
-    .select('*')
+    .select('*, moments_audio(*)')
     .order('date', { ascending: false });
 
   if (error) throw error;
-  return (data ?? []) as Moment[];
+  return (data ?? []).map(normalizeMoment);
 }
 
 export async function getMoment(id: string): Promise<Moment | null> {
   const { data, error } = await supabase
     .from(MOMENTS_TABLE)
-    .select('*')
+    .select('*, moments_audio(*)')
     .eq('id', id)
     .single();
 
   if (error) throw error;
-  return (data as Moment) ?? null;
+  return data ? normalizeMoment(data) : null;
 }
 
 /**

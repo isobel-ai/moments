@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -9,8 +9,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { colors, fonts, makeWaveformBars } from '@moments/ui';
 import { Waveform, PlayerSheet, PaperGrain } from '@moments/ui';
+import type { Moment } from '@moments/types';
+import { getMoment } from '../lib/moments';
 
 export interface PlayerScreenProps {
+  momentId?: string;
   onBack: () => void;
   onAddMore: () => void;
 }
@@ -91,12 +94,49 @@ const sections = [
   { type: 'revelation' as const, title: 'Revelation', preview: 'Rest is not passive. It is an act of trust.' },
 ];
 
+function formatDate(date: string): string {
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return date;
+  return d.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 /**
  * Player (S9.dc.html): back/share, handwritten title, waveform, controls, sheet.
  */
-export function PlayerScreen({ onBack, onAddMore }: PlayerScreenProps) {
+export function PlayerScreen({ momentId, onBack, onAddMore }: PlayerScreenProps) {
   const insets = useSafeAreaInsets();
   const [expanded, setExpanded] = useState(false);
+  const [moment, setMoment] = useState<Moment | null>(null);
+
+  useEffect(() => {
+    if (!momentId) return;
+    let active = true;
+    getMoment(momentId)
+      .then((data) => {
+        if (active) setMoment(data);
+      })
+      .catch(() => {
+        if (active) setMoment(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [momentId]);
+
+  const title = moment?.title ?? 'Saturday morning worship';
+  const date = moment ? formatDate(moment.date) : '10 October 2026';
+  const duration = moment ? formatDuration(moment.audio.duration) : '12:46';
+
   const bars = makeWaveformBars(64, 200, 5, colors.playerBar, {
     frequency: 1.6,
     phase: -0.9,
@@ -133,9 +173,9 @@ export function PlayerScreen({ onBack, onAddMore }: PlayerScreenProps) {
       </View>
 
       <View style={styles.titleWrap}>
-        <Text style={styles.title}>Saturday morning worship</Text>
-        <Text style={styles.date}>10 October 2026</Text>
-        <Text style={styles.meta}>12:46 · Private</Text>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.date}>{date}</Text>
+        <Text style={styles.meta}>{duration} · Private</Text>
       </View>
 
       <View style={styles.waveWrap}>

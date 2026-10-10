@@ -44,7 +44,7 @@ export type RootStackParamList = {
   FavouriteStep: undefined;
   ReflectionStep: undefined;
   Complete: undefined;
-  Player: undefined;
+  Player: { momentId?: string } | undefined;
   MomentSheet: undefined;
   Collections: undefined;
   Import: undefined;
@@ -221,9 +221,10 @@ function CompleteRoute({ navigation }: ScreenProps) {
   );
 }
 
-function PlayerRoute({ navigation }: ScreenProps) {
+function PlayerRoute({ navigation, route }: ScreenProps) {
   return (
     <PlayerScreen
+      momentId={route.params?.momentId}
       onBack={() => navigation.navigate('Home')}
       onAddMore={() => navigation.navigate('Enrich')}
     />
@@ -243,7 +244,7 @@ function CollectionsRoute({ navigation }: ScreenProps) {
   return (
     <CollectionsScreen
       onBack={() => navigation.navigate('Home')}
-      onOpenMoment={() => navigation.navigate('Player')}
+      onOpenMoment={(momentId) => navigation.navigate('Player', { momentId })}
       onRecord={() => navigation.navigate('Recording')}
       onImport={() => navigation.navigate('Import')}
     />
