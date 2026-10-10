@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, Pressable } from 'react-native';
 import { Text, Button, colors, spacing } from '@moments/ui';
 import type { Moment } from '@moments/types';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -22,33 +22,11 @@ export function HomeScreen({ navigation }: Props) {
       .finally(() => setLoading(false));
   }, []);
 
-  function handleAddScripture() {
-    const momentId = moments[0]?.id;
-    if (!momentId) {
-      Alert.alert(
-        'No moments yet',
-        'Record a moment first, then add scripture to it.',
-      );
-      return;
-    }
-    navigation.navigate('AddScripture', { momentId });
-  }
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text variant="heading">Moments</Text>
         <View style={styles.headerActions}>
-          <Button
-            label="Test bible"
-            variant="ghost"
-            onPress={() => navigation.navigate('BibleTest')}
-          />
-          <Button
-            label="Add scripture"
-            variant="secondary"
-            onPress={handleAddScripture}
-          />
           <Button label="Sign out" variant="ghost" onPress={signOut} />
         </View>
       </View>
@@ -57,7 +35,12 @@ export function HomeScreen({ navigation }: Props) {
         data={moments}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <Pressable
+            style={styles.card}
+            onPress={() =>
+              navigation.navigate('MomentDetail', { momentId: item.id })
+            }
+          >
             <View style={styles.cardText}>
               <Text variant="title">{item.title}</Text>
               <Text variant="caption" color={colors.textMuted}>
@@ -71,7 +54,7 @@ export function HomeScreen({ navigation }: Props) {
                 navigation.navigate('AddScripture', { momentId: item.id })
               }
             />
-          </View>
+          </Pressable>
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
