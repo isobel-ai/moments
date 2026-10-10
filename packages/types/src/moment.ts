@@ -38,28 +38,28 @@ export interface MomentScripture {
   note?: string;
 }
 
-/** A prayer prayed during or because of a Moment. */
-export interface MomentPrayer {
-  id: string;
-  content: string;
-  /** ISO timestamp of when the prayer was recorded. */
-  prayedAt: string;
-}
+/** The kind of note attached to a Moment. */
+export type MomentNoteKind =
+  | 'prayer'
+  | 'revelation'
+  | 'reflection'
+  | 'highlight';
 
-/** A revelation — something learned or understood during a Moment. */
-export interface MomentRevelation {
+/** A note attached to a Moment. */
+export interface MomentNote {
   id: string;
+  /** The owning Moment. */
+  momentId: string;
+  kind: MomentNoteKind;
+  /** Whether the note was captured during the recording. */
+  isDuringRecording: boolean;
+  /** Position in the audio, in seconds. Only set when isDuringRecording. */
+  timestamp?: number;
+  /** Whether the note was added/edited after the fact, some time later. */
+  isUpdated: boolean;
   content: string;
-  /** ISO timestamp of when the revelation was recorded. */
+  /** ISO timestamp of when the note was created. */
   createdAt: string;
-}
-
-/** A meaningful timestamp within the audio, with a short note. */
-export interface MomentHighlight {
-  id: string;
-  /** Position in the audio, in seconds. */
-  timestamp: number;
-  note: string;
 }
 
 /** The core object of the platform. */
@@ -78,9 +78,7 @@ export interface Moment {
   /** The audio asset for this Moment. */
   audio: AudioAsset;
   scriptures: MomentScripture[];
-  prayers: MomentPrayer[];
-  revelations: MomentRevelation[];
-  highlights: MomentHighlight[];
+  notes: MomentNote[];
   createdAt: string;
   updatedAt: string;
 }
