@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -11,10 +11,25 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { colors, fonts, makeMiniBars } from '@moments/ui';
 import { Waveform, PaperGrain } from '@moments/ui';
+import { pickAudioFile, type SelectedAudioFile } from '../lib/audio';
 
 export interface ImportDetailsScreenProps {
+  file: SelectedAudioFile;
   onBack: () => void;
-  onImport: () => void;
+  onImport: (file: SelectedAudioFile, title: string) => void;
+}
+
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function formatSize(bytes?: number): string {
+  if (!bytes) return '';
+  const mb = bytes / (1024 * 1024);
+  if (mb >= 1) return `${mb.toFixed(1)} MB`;
+  return `${Math.round(bytes / 1024)} KB`;
 }
 
 function BackIcon() {
@@ -35,12 +50,44 @@ function BackIcon() {
  * Import-Details (S11b.dc.html): file card, editable title, recorded-on date,
  * and an Import Moment button.
  */
-export function ImportDetailsScreen({ onBack, onImport }: ImportDetailsScreenProps) {
+export function ImportDetailsScreen({ file, onBack, onImport }: ImportDetailsScreenProps) {
   const insets = useSafeAreaInsets();
+  const [selected, setSelected] = useState(file);
+  const [title, setTitle] = useState(file.fileName.replace(/\.[^.]+$/, ''));
+  const [importing, setImporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const bars = makeMiniBars(52, 40, 9, colors.importDetailsBar, {
     wave: 4,
     minHeight: 3,
   });
+
+  const meta = [formatDuration(selected.duration), formatSize(selected.size)]
+    .filter(Boolean)
+    .join(' · ');
+
+  const handleChange = async () => {
+    setError(null);
+    try {
+      const next = await pickAudioFile();
+      if (next) {
+        setSelected(next);
+        setTitle(next.fileName.replace(/\.[^.]+$/, ''));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not open that file.');
+    }
+  };
+
+  const handleImport = async () => {
+    setError(null);
+    setImporting(true);
+    try {
+      await onImport(selected, title.trim() || selected.fileName);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not import this file.');
+      setImporting(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -65,11 +112,14 @@ export function ImportDetailsScreen({ onBack, onImport }: ImportDetailsScreenPro
 
         <View style={styles.fileCard}>
           <View style={styles.fileInfo}>
-            <Text style={styles.fileName}>Waymaker Audio.m4a</Text>
-            <Text style={styles.fileMeta}>08:34 · 7.9 MB</Text>
+            <Text style={styles.fileName} numberOfLines={1}>
+              {selected.fileName}
+            </Text>
+            <Text style={styles.fileMeta}>{meta}</Text>
           </View>
           <Pressable
             accessibilityRole="button"
+            onPress={handleChange}
             style={styles.change}
           >
             <Text style={styles.changeText}>Change</Text>
@@ -87,7 +137,8 @@ export function ImportDetailsScreen({ onBack, onImport }: ImportDetailsScreenPro
         <TextInput
           placeholder="Title"
           placeholderTextColor={colors.importDetailsTitleInput}
-          defaultValue="Waymaker Audio"
+          value={title}
+          onChangeText={setTitle}
           style={styles.titleInput}
         />
 
@@ -102,15 +153,22 @@ export function ImportDetailsScreen({ onBack, onImport }: ImportDetailsScreenPro
         <Text style={styles.hint}>
           You can add notes, Scripture and more after importing.
         </Text>
+
+        {error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : null}
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 24 }]}>
         <Pressable
           accessibilityRole="button"
-          onPress={onImport}
-          style={styles.importBtn}
+          onPress={handleImport}
+          disabled={importing}
+          style={[styles.importBtn, importing && styles.importBtnDisabled]}
         >
-          <Text style={styles.importText}>Import Moment</Text>
+          <Text style={styles.importText}>
+            {importing ? 'Importing…' : 'Import Moment'}
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -215,6 +273,12 @@ const styles = StyleSheet.create({
     color: colors.importDetailsMeta,
     marginTop: 24,
   },
+  errorText: {
+    fontFamily: fonts.ui,
+    fontSize: 14,
+    color: colors.danger,
+    marginTop: 20,
+  },
   footer: {
     position: 'absolute',
     left: 0,
@@ -228,6 +292,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cobalt,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  importBtnDisabled: {
+    opacity: 0.6,
   },
   importText: {
     fontFamily: fonts.uiMedium,
