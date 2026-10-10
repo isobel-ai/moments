@@ -21,6 +21,7 @@ export interface HomeScreenProps {
   onSeeAll: () => void;
   onImport: () => void;
   onCollections: () => void;
+  onSignOut: () => void;
 }
 
 function CollectionsIcon() {
@@ -35,6 +36,27 @@ function CollectionsIcon() {
       />
       <Path
         d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4"
+        stroke={colors.cobalt}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function SignOutIcon() {
+  return (
+    <Svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+        stroke={colors.cobalt}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M16 17l5-5-5-5M21 12H9"
         stroke={colors.cobalt}
         strokeWidth="1.4"
         strokeLinecap="round"
@@ -89,9 +111,10 @@ export function HomeScreen({
   onSeeAll,
   onImport,
   onCollections,
+  onSignOut,
 }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
-  const { session } = useAuth();
+  const { session, signOut } = useAuth();
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [moments, setMoments] = useState<Moment[]>([]);
 
@@ -134,14 +157,24 @@ export function HomeScreen({
         <Text style={styles.greeting}>
           Welcome back,{'\n'}{greetingName}
         </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Collections"
-          onPress={onCollections}
-          style={styles.headerIcon}
-        >
-          <CollectionsIcon />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Collections"
+            onPress={onCollections}
+            style={styles.headerIcon}
+          >
+            <CollectionsIcon />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sign out"
+            onPress={onSignOut}
+            style={styles.headerIcon}
+          >
+            <SignOutIcon />
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView
@@ -241,6 +274,11 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   scroll: {
     paddingHorizontal: 28,
