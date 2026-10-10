@@ -14,6 +14,9 @@
     "build:production": "eas build --profile production"
   },
   "dependencies": {
+    "@expo-google-fonts/cormorant-garamond": "^0.4.1",
+    "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/reenie-beanie": "^0.4.1",
     "@moments/types": "*",
     "@moments/ui": "*",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -25,6 +28,7 @@
     "expo-constants": "~57.0.21",
     "expo-document-picker": "~57.0.3",
     "expo-file-system": "~57.0.7",
+    "expo-font": "^57.0.4",
     "expo-haptics": "~57.0.3",
     "expo-image": "~57.0.5",
     "expo-linear-gradient": "~57.0.2",

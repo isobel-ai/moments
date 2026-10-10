@@ -7,10 +7,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { colors } from '../tokens/colors';
-import { radii } from '../tokens/radii';
-import { spacing } from '../tokens/spacing';
-import { typography } from '../tokens/typography';
+import { colors, fonts, radii, spacing } from '../theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -22,26 +19,26 @@ export interface ButtonProps extends Omit<PressableProps, 'style'> {
 
 const variantStyles: Record<ButtonVariant, ViewStyle> = {
   primary: {
-    backgroundColor: colors.brand,
+    backgroundColor: colors.cobalt,
   },
   secondary: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.paleBlue,
     borderWidth: 1,
-    borderColor: colors.borderStrong,
+    borderColor: colors.hairlineStrong,
   },
   ghost: {
     backgroundColor: 'transparent',
   },
   danger: {
-    backgroundColor: colors.danger,
+    backgroundColor: colors.cobalt,
   },
 };
 
 const labelColors: Record<ButtonVariant, string> = {
-  primary: colors.background,
-  secondary: colors.text,
-  ghost: colors.brand,
-  danger: colors.text,
+  primary: colors.white,
+  secondary: colors.cobalt,
+  ghost: colors.cobalt,
+  danger: colors.white,
 };
 
 export function Button({
@@ -72,16 +69,16 @@ const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
-    borderRadius: radii.lg,
+    paddingVertical: spacing.screenPadding,
+    paddingHorizontal: spacing.screenPadding,
+    borderRadius: radii.button,
     minHeight: 48,
   },
   pressed: {
     opacity: 0.85,
   },
   label: {
-    fontSize: typography.size.body,
-    fontWeight: typography.weight.semibold,
+    fontFamily: fonts.uiMedium,
+    fontSize: 15,
   },
 });
