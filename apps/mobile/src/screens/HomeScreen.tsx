@@ -17,7 +17,7 @@ import type { Moment } from '@moments/types';
 
 export interface HomeScreenProps {
   onRecord: () => void;
-  onOpenMoment: () => void;
+  onOpenMoment: (momentId: string) => void;
   onSeeAll: () => void;
   onImport: () => void;
   onCollections: () => void;
@@ -220,7 +220,7 @@ export function HomeScreen({
               <Pressable
                 key={moment.id}
                 accessibilityRole="button"
-                onPress={onOpenMoment}
+                onPress={() => onOpenMoment(moment.id)}
                 style={styles.recentCard}
               >
                 <View style={styles.recentCardBody}>
