@@ -6,7 +6,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { getMoment, getMomentAudio } from '../lib/moments';
-import { listNotes, listScriptures } from '../lib/notes';
+import { createNote, listNotes, listScriptures } from '../lib/notes';
+import { NoteForm, type NoteFormInput } from '../features/note';
 import { AudioPlayer } from '../components/AudioPlayer';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MomentDetail'>;
@@ -26,13 +27,16 @@ function stripHtml(html: string): string {
 }
 
 export function MomentDetailScreen({ navigation, route }: Props) {
-  const { momentId } = route.params;
+  const { momentId, openNoteForm } = route.params;
   const [moment, setMoment] = useState<Moment | null>(null);
   const [audio, setAudio] = useState<AudioAsset | null>(null);
   const [notes, setNotes] = useState<MomentNote[]>([]);
   const [scriptures, setScriptures] = useState<MomentScripture[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
+  const [noteFormOpen, setNoteFormOpen] = useState(Boolean(openNoteForm));
+  const [saving, setSaving] = useState(false);
+  const [noteError, setNoteError] = useState<string>();
 
   useEffect(() => {
     let cancelled = false;
@@ -61,6 +65,26 @@ export function MomentDetailScreen({ navigation, route }: Props) {
       cancelled = true;
     };
   }, [momentId]);
+
+  async function handleSaveNote(input: NoteFormInput) {
+    setSaving(true);
+    setNoteError(undefined);
+    try {
+      const note = await createNote({
+        momentId,
+        kind: input.kind,
+        content: input.content,
+        isDuringRecording: false,
+        isUpdated: true,
+      });
+      setNotes((prev) => [...prev, note]);
+      setNoteFormOpen(false);
+    } catch (err) {
+      setNoteError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -128,11 +152,30 @@ export function MomentDetailScreen({ navigation, route }: Props) {
                   </View>
                 ))
               )}
+              {noteFormOpen ? (
+                <View style={styles.noteForm}>
+                  <NoteForm
+                    onSave={handleSaveNote}
+                    onCancel={() => setNoteFormOpen(false)}
+                    saving={saving}
+                  />
+                  {noteError ? (
+                    <Text variant="caption" color={colors.danger}>
+                      {noteError}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
             </View>
           </>
         )}
       </ScrollView>
 
+      <Button
+        label="Add note"
+        variant="secondary"
+        onPress={() => setNoteFormOpen(true)}
+      />
       <Button
         label="Add scripture"
         variant="secondary"
@@ -166,5 +209,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: spacing.md,
     gap: spacing.xs,
+  },
+  noteForm: {
+    marginTop: spacing.sm,
+    gap: spacing.sm,
   },
 });

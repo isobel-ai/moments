@@ -47,13 +47,25 @@ export function HomeScreen({ navigation }: Props) {
                 {item.date}
               </Text>
             </View>
-            <Button
-              label="Add scripture"
-              variant="secondary"
-              onPress={() =>
-                navigation.navigate('AddScripture', { momentId: item.id })
-              }
-            />
+            <View style={styles.cardActions}>
+              <Button
+                label="Add note"
+                variant="secondary"
+                onPress={() =>
+                  navigation.navigate('MomentDetail', {
+                    momentId: item.id,
+                    openNoteForm: true,
+                  })
+                }
+              />
+              <Button
+                label="Add scripture"
+                variant="secondary"
+                onPress={() =>
+                  navigation.navigate('AddScripture', { momentId: item.id })
+                }
+              />
+            </View>
           </Pressable>
         )}
         ListEmptyComponent={
@@ -120,6 +132,9 @@ const styles = StyleSheet.create({
   cardText: {
     flex: 1,
     gap: spacing.xxs,
+  },
+  cardActions: {
+    gap: spacing.sm,
   },
   empty: {
     flex: 1,
