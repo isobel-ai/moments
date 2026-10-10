@@ -110,9 +110,9 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   tab: {
+    flex: 1,
     alignItems: 'center',
     gap: 4,
-    minWidth: 44,
     minHeight: 44,
     justifyContent: 'center',
   },
