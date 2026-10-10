@@ -5,6 +5,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SplashScreen } from '../screens/SplashScreen';
 import { LogoRevealScreen } from '../screens/LogoRevealScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
+import { SignInUpScreen } from '../screens/SignInUpScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { RecordingScreen } from '../screens/RecordingScreen';
 import { AddNoteScreen } from '../screens/AddNoteScreen';
@@ -28,6 +29,7 @@ export type RootStackParamList = {
   Splash: undefined;
   LogoReveal: undefined;
   Welcome: undefined;
+  SignInUp: undefined;
   Home: undefined;
   Recording: undefined;
   AddNote: undefined;
@@ -61,7 +63,16 @@ function LogoRevealRoute({ navigation }: ScreenProps) {
 }
 
 function WelcomeRoute({ navigation }: ScreenProps) {
-  return <WelcomeScreen onStart={() => navigation.replace('Home')} />;
+  return <WelcomeScreen onStart={() => navigation.replace('SignInUp')} />;
+}
+
+function SignInUpRoute({ navigation }: ScreenProps) {
+  return (
+    <SignInUpScreen
+      onBack={() => navigation.navigate('Welcome')}
+      onAuthenticated={() => navigation.replace('Home')}
+    />
+  );
 }
 
 function HomeRoute({ navigation }: ScreenProps) {
@@ -261,6 +272,7 @@ export function RootNavigator() {
       <Stack.Screen name="Splash" component={SplashRoute} />
       <Stack.Screen name="LogoReveal" component={LogoRevealRoute} />
       <Stack.Screen name="Welcome" component={WelcomeRoute} />
+      <Stack.Screen name="SignInUp" component={SignInUpRoute} />
       <Stack.Screen name="Home" component={HomeRoute} />
       <Stack.Screen name="Recording" component={RecordingRoute} />
       <Stack.Screen name="AddNote" component={AddNoteRoute} />
