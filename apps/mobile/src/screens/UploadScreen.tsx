@@ -15,11 +15,13 @@ export function UploadScreen({ navigation }: Props) {
     const { start, stop, isRecording } = useRecorder();
     const [status, setStatus] = useState<Status>('idle');
     const [path, setPath] = useState<string | null>(null);
+    const [momentId, setMomentId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const handleRecord = async () => {
         setError(null);
         setPath(null);
+        setMomentId(null);
         try {
             await start();
             setStatus('recording');
@@ -36,6 +38,7 @@ export function UploadScreen({ navigation }: Props) {
             setStatus('uploading');
             const result = await uploadAudio(recording);
             setPath(result.path);
+            setMomentId(result.momentId);
             setStatus('done');
         } catch (e) {
             setError(e instanceof Error ? e.message : String(e));
@@ -92,6 +95,15 @@ export function UploadScreen({ navigation }: Props) {
                         onPress={handleStopAndUpload}
                     />
                 )}
+                {status === 'done' && momentId ? (
+                    <Button
+                        label="Add scripture"
+                        variant="secondary"
+                        onPress={() =>
+                            navigation.navigate('AddScripture', { momentId })
+                        }
+                    />
+                ) : null}
                 <Button
                     label="Back"
                     variant="ghost"

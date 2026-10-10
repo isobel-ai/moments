@@ -7,12 +7,14 @@ import { UploadScreen } from '../screens/UploadScreen';
 import { UploadFileScreen } from '../screens/UploadFileScreen';
 import { MomentDetailScreen } from '../screens/MomentDetailScreen';
 import { SignInScreen } from '../screens/SignInScreen';
+import { AddScriptureScreen } from '../screens/AddScriptureScreen';
 
 export type RootStackParamList = {
   Home: undefined;
   Upload: undefined;
   UploadFile: undefined;
   MomentDetail: { momentId: string };
+  AddScripture: { momentId: string };
   SignIn: undefined;
 };
 
@@ -38,6 +40,7 @@ export function RootNavigator() {
           <Stack.Screen name="Upload" component={UploadScreen} />
           <Stack.Screen name="UploadFile" component={UploadFileScreen} />
           <Stack.Screen name="MomentDetail" component={MomentDetailScreen} />
+          <Stack.Screen name="AddScripture" component={AddScriptureScreen} />
         </>
       ) : (
         <Stack.Screen name="SignIn" component={SignInScreen} />

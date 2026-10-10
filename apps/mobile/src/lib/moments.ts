@@ -38,6 +38,21 @@ export async function createMoment(
   return data as Moment;
 }
 
+/**
+ * Create a minimal moment with just a title. Other columns (date, people, type)
+ * use their database defaults. Useful for attaching scripture before recording.
+ */
+export async function createMomentForScripture(title: string): Promise<Moment> {
+  const { data, error } = await supabase
+    .from(MOMENTS_TABLE)
+    .insert({ title })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Moment;
+}
+
 export async function updateMoment(
   id: string,
   input: Partial<CreateMomentInput>,
