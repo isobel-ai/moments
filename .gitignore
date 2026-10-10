@@ -147,3 +147,44 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+supabase/.temp/
+
+# Metro
+.metro-health-check*
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+*.iml
+
+# Local env files (keep examples)
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
