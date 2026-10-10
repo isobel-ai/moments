@@ -40,6 +40,26 @@ export interface UploadAudioResult {
 }
 
 /**
+ * Builds a safe storage file name from a user-typed title and audio format.
+ *
+ * Strips a trailing extension that matches the format (so a title that already
+ * ends in `.m4a` doesn't become `name.m4a.m4a`), replaces characters that are
+ * illegal in file paths, and appends the format extension.
+ */
+function buildStorageFileName(title: string, format: AudioFormat): string {
+    const ext = `.${format}`;
+    let base = title.trim();
+    if (base.toLowerCase().endsWith(ext)) {
+        base = base.slice(0, -ext.length);
+    }
+    base = base
+        .replace(/[\\/:*?"<>|]/g, '-')
+        .replace(/\s+/g, ' ')
+        .trim();
+    return `${base || 'audio'}${ext}`;
+}
+
+/**
  * Uploads an audio recording to the private `audio` bucket.
  *
  * Creates a Moment and its moments_audio metadata row for the uploaded file.
@@ -56,11 +76,12 @@ export async function uploadAudio(
         throw new Error('You must be signed in to upload audio.');
     }
 
-    const fileName =
-        input.fileName ??
-        input.uri.split('/').pop() ??
-        `recording-${Date.now()}.${input.format}`;
-    const path = `${user.id}/${fileName}`;
+    const storageFileName = input.title
+        ? buildStorageFileName(input.title, input.format)
+        : (input.fileName ??
+            input.uri.split('/').pop() ??
+            `recording-${Date.now()}.${input.format}`);
+    const path = `${user.id}/${storageFileName}`;
 
     const file = new File(input.uri);
     if (!file.exists) {
@@ -98,7 +119,7 @@ export async function uploadAudio(
                 moment_id: createdMomentId,
                 user_id: user.id,
                 storage_path: path,
-                file_name: fileName,
+                file_name: storageFileName,
                 format: input.format,
                 duration: input.duration,
                 size: bytes.byteLength,
@@ -109,7 +130,7 @@ export async function uploadAudio(
         return {
             momentId: createdMomentId,
             path,
-            fileName,
+            fileName: storageFileName,
             format: input.format,
             duration: input.duration,
             size: bytes.byteLength,
