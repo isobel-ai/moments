@@ -24,6 +24,7 @@ import { MomentSheetScreen } from '../screens/MomentSheetScreen';
 import { CollectionsScreen } from '../screens/CollectionsScreen';
 import { ImportScreen } from '../screens/ImportScreen';
 import { ImportDetailsScreen } from '../screens/ImportDetailsScreen';
+import { useAuth } from '../features/auth/AuthProvider';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -55,7 +56,23 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 type ScreenProps = NativeStackScreenProps<RootStackParamList, keyof RootStackParamList>;
 
 function SplashRoute({ navigation }: ScreenProps) {
-  return <SplashScreen onEnter={() => navigation.replace('LogoReveal')} />;
+  const { session, loading } = useAuth();
+
+  const handleEnter = () => {
+    // Already authenticated: skip the welcome/sign-in flow and go straight home.
+    if (session) {
+      navigation.replace('Home');
+    } else {
+      navigation.replace('LogoReveal');
+    }
+  };
+
+  // Wait for the session to load before deciding where to route.
+  if (loading) {
+    return <SplashScreen onEnter={handleEnter} />;
+  }
+
+  return <SplashScreen onEnter={handleEnter} />;
 }
 
 function LogoRevealRoute({ navigation }: ScreenProps) {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,6 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, radii } from '@moments/ui';
 import { PaperGrain, PillButton } from '@moments/ui';
+import { useAuth } from '../features/auth/AuthProvider';
 
 export interface SignInUpScreenProps {
   onBack: () => void;
@@ -22,19 +24,60 @@ export interface SignInUpScreenProps {
  * Sign in / Sign up (auth): a warm-white paper screen with a handwritten
  * greeting, fields for name, email, password and confirm password, and a cobalt
  * pill button. Matches the Moments aesthetic.
+ *
+ * Wired to Supabase: pressing Continue tries to create an account first, and
+ * falls back to signing in if the email is already registered.
  */
 export function SignInUpScreen({ onBack, onAuthenticated }: SignInUpScreenProps) {
   const insets = useSafeAreaInsets();
+  const { signIn, signUp } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const canSubmit =
     name.trim().length > 0 &&
     email.trim().length > 0 &&
     password.length > 0 &&
-    confirm.length > 0;
+    confirm.length > 0 &&
+    !submitting;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    if (password !== confirm) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      // Try to create an account first; if the email is already registered,
+      // fall back to signing in.
+      try {
+        await signUp(email.trim(), password, name.trim());
+      } catch (signUpError) {
+        const message = signUpError instanceof Error ? signUpError.message : '';
+        const alreadyExists =
+          /already registered|already been registered|user already/i.test(message);
+        if (alreadyExists) {
+          await signIn(email.trim(), password);
+        } else {
+          throw signUpError;
+        }
+      }
+      onAuthenticated();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      setError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -122,12 +165,16 @@ export function SignInUpScreen({ onBack, onAuthenticated }: SignInUpScreenProps)
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 24 }]}>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
         <PillButton
-          label="Continue"
-          onPress={onAuthenticated}
+          label={submitting ? 'Please wait…' : 'Continue'}
+          onPress={handleSubmit}
           disabled={!canSubmit}
           style={!canSubmit ? styles.disabled : undefined}
         />
+        {submitting ? (
+          <ActivityIndicator color={colors.cobalt} style={styles.spinner} />
+        ) : null}
         <Text style={styles.terms}>
           By continuing you agree to our Terms &amp; Privacy Policy.
         </Text>
@@ -199,6 +246,15 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 28,
     gap: 14,
+  },
+  error: {
+    fontFamily: fonts.ui,
+    fontSize: 13,
+    color: colors.danger,
+    textAlign: 'center',
+  },
+  spinner: {
+    marginTop: -6,
   },
   disabled: {
     opacity: 0.5,
