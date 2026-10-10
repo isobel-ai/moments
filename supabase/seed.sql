@@ -7,19 +7,41 @@
 -- A sample user (password: password123)
 insert into
     auth.users (
+        instance_id,
         id,
+        aud,
+        role,
         email,
         encrypted_password,
-        email_confirmed_at
+        email_confirmed_at,
+        raw_app_meta_data,
+        raw_user_meta_data,
+        created_at,
+        updated_at,
+        confirmation_token,
+        email_change,
+        email_change_token_new,
+        recovery_token
     )
 values (
+        '00000000-0000-0000-0000-000000000000',
         '00000000-0000-0000-0000-000000000001',
+        'authenticated',
+        'authenticated',
         'demo@moments.app',
         crypt (
             'password123',
             gen_salt ('bf')
         ),
-        now()
+        now(),
+        '{"provider":"email","providers":["email"]}',
+        '{}',
+        now(),
+        now(),
+        '',
+        '',
+        '',
+        ''
     )
 on conflict (id) do nothing;
 
@@ -28,17 +50,25 @@ insert into
         id,
         user_id,
         provider,
+        provider_id,
         identity_data,
-        last_sign_in_at
+        last_sign_in_at,
+        created_at,
+        updated_at
     )
 values (
         '00000000-0000-0000-0000-000000000001',
         '00000000-0000-0000-0000-000000000001',
         'email',
+        '00000000-0000-0000-0000-000000000001',
         jsonb_build_object(
             'sub',
-            '00000000-0000-0000-0000-000000000001'
+            '00000000-0000-0000-0000-000000000001',
+            'email',
+            'demo@moments.app'
         ),
+        now(),
+        now(),
         now()
     )
 on conflict (id) do nothing;
