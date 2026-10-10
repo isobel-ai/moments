@@ -7,12 +7,17 @@ import {
   View,
 } from 'react-native';
 import { colors, fonts, radii } from '@moments/ui';
+import { ScripturePicker, type ScriptureSelection } from '../features/scripture';
+import { createScripture } from '../lib/scriptures';
 import { StepLayout } from './StepLayout';
 
 export interface ScriptureStepProps {
   onBack: () => void;
   onSave: () => void;
   onNext: () => void;
+  /** When set, the step edits this moment directly: picking a passage saves it. */
+  momentId?: string;
+  onSaved?: () => void;
 }
 
 const results = [
@@ -25,8 +30,48 @@ const results = [
 /**
  * Scripture step (S8b.dc.html): search field, results, passage preview.
  */
-export function ScriptureStep({ onBack, onSave, onNext }: ScriptureStepProps) {
+export function ScriptureStep({
+  onBack,
+  onSave,
+  onNext,
+  momentId,
+  onSaved,
+}: ScriptureStepProps) {
   const [selected, setSelected] = useState<string | null>('Psalm 42:1');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string>();
+
+  if (momentId) {
+    const handleSelect = async (selection: ScriptureSelection) => {
+      setSaving(true);
+      setError(undefined);
+      try {
+        await createScripture({ momentId, ...selection });
+        onSaved?.();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    return (
+      <StepLayout
+        title="Scripture"
+        subtitle="Add a verse that spoke to you."
+        onBack={onBack}
+      >
+        <View style={styles.picker}>
+          <ScripturePicker
+            onSelect={handleSelect}
+            saving={saving}
+            showHeader={false}
+          />
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+        </View>
+      </StepLayout>
+    );
+  }
 
   return (
     <StepLayout
@@ -86,6 +131,15 @@ export function ScriptureStep({ onBack, onSave, onNext }: ScriptureStepProps) {
 }
 
 const styles = StyleSheet.create({
+  picker: {
+    marginTop: 28,
+  },
+  error: {
+    fontFamily: fonts.ui,
+    fontSize: 13,
+    color: colors.danger,
+    marginTop: 12,
+  },
   search: {
     flexDirection: 'row',
     alignItems: 'center',

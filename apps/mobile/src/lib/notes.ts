@@ -5,6 +5,33 @@ import { supabase } from './supabase';
 const NOTES_TABLE = 'moment_notes';
 const SCRIPTURES_TABLE = 'moment_scriptures';
 
+/** Maps a snake_case `moment_notes` row to the camelCase domain shape. */
+function normalizeNote(row: Record<string, any>): MomentNote {
+  return {
+    id: row.id,
+    momentId: row.moment_id,
+    kind: row.kind,
+    isDuringRecording: row.is_during_recording,
+    timestamp: row.timestamp ?? undefined,
+    isUpdated: row.is_updated,
+    content: row.content,
+    createdAt: row.created_at,
+  };
+}
+
+/** Maps a snake_case `moment_scriptures` row to the camelCase domain shape. */
+function normalizeScripture(row: Record<string, any>): MomentScripture {
+  return {
+    id: row.id,
+    reference: row.reference,
+    passageKey: row.passage_key,
+    bibleId: row.bible_id,
+    translation: row.translation,
+    text: row.text ?? undefined,
+    note: row.note ?? undefined,
+  };
+}
+
 export interface CreateNoteInput {
   momentId: string;
   kind: MomentNoteKind;
@@ -38,7 +65,7 @@ export async function createNote(input: CreateNoteInput): Promise<MomentNote> {
     .single();
 
   if (error) throw new Error(error.message);
-  return data as MomentNote;
+  return normalizeNote(data);
 }
 
 export async function listNotes(momentId: string): Promise<MomentNote[]> {
@@ -49,7 +76,7 @@ export async function listNotes(momentId: string): Promise<MomentNote[]> {
     .order('created_at', { ascending: true });
 
   if (error) throw error;
-  return (data ?? []) as MomentNote[];
+  return (data ?? []).map(normalizeNote);
 }
 
 export async function listScriptures(momentId: string): Promise<MomentScripture[]> {
@@ -60,5 +87,5 @@ export async function listScriptures(momentId: string): Promise<MomentScripture[
     .order('created_at', { ascending: true });
 
   if (error) throw error;
-  return (data ?? []) as MomentScripture[];
+  return (data ?? []).map(normalizeScripture);
 }

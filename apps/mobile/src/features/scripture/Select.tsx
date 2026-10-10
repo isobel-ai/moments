@@ -44,10 +44,19 @@ export function Select({
         style={[styles.trigger, disabled && styles.triggerDisabled]}
         onPress={() => setOpen(true)}
       >
-        <Text variant="body" color={selected ? colors.text : colors.textMuted}>
+        <Text
+          variant="body"
+          numberOfLines={1}
+          style={styles.triggerLabel}
+          color={
+            selected
+              ? colors.scriptureSearchText
+              : colors.scriptureSearchPlaceholder
+          }
+        >
           {selected?.label ?? placeholder}
         </Text>
-        <Text variant="body" color={colors.textMuted}>
+        <Text variant="body" color={colors.scriptureSearchPlaceholder}>
           ▾
         </Text>
       </Pressable>
@@ -59,8 +68,12 @@ export function Select({
         onRequestClose={() => setOpen(false)}
       >
         <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
-          <View style={styles.sheet}>
-            <Text variant="title" style={styles.sheetTitle}>
+          <View style={styles.sheet} onStartShouldSetResponder={() => true}>
+            <Text
+              variant="title"
+              color={colors.darkBlue}
+              style={styles.sheetTitle}
+            >
               {label}
             </Text>
             <FlatList
@@ -76,7 +89,7 @@ export function Select({
                 >
                   <Text
                     variant="body"
-                    color={item.value === value ? colors.brand : colors.text}
+                    color={item.value === value ? colors.cobalt : colors.darkBlue}
                   >
                     {item.label}
                   </Text>
@@ -98,24 +111,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surface,
+    gap: spacing.sm,
+    backgroundColor: colors.scriptureSearchBg,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
+    borderColor: colors.scriptureResultBorder,
+    borderRadius: radii.field,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     minHeight: 48,
+  },
+  triggerLabel: {
+    flex: 1,
   },
   triggerDisabled: {
     opacity: 0.5,
   },
   backdrop: {
     flex: 1,
-    backgroundColor: colors.surfaceOverlay,
+    backgroundColor: 'rgba(16,47,99,0.35)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.warmWhite,
     borderTopLeftRadius: radii.lg,
     borderTopRightRadius: radii.lg,
     padding: spacing.lg,
@@ -127,6 +144,6 @@ const styles = StyleSheet.create({
   option: {
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.hairline,
   },
 });

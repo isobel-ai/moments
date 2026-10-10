@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -10,14 +10,26 @@ import Svg, { Path } from 'react-native-svg';
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
 import { colors, fonts, makeWaveformBars } from '@moments/ui';
 import { Waveform, PlayerSheet, PaperGrain } from '@moments/ui';
-import type { Moment } from '@moments/types';
+import type {
+  PlayerSheetAddOption,
+  PlayerSheetSection,
+} from '@moments/ui';
+import type { Moment, MomentNote, MomentScripture } from '@moments/types';
 import { getMoment } from '../lib/moments';
 import { getSignedAudioUrl } from '../lib/audio';
+import { listNotes, listScriptures } from '../lib/notes';
+import { EnrichmentDetail, type EnrichmentDetailData } from './EnrichmentDetail';
+
+/** Enrichment types that can be added to an existing moment from the Player. */
+export type EnrichmentType = 'scripture' | 'prayer' | 'revelation' | 'reflection';
 
 export interface PlayerScreenProps {
   momentId?: string;
+  /** Bump to refetch the moment's enrichments (e.g. after returning from an editor). */
+  reloadKey?: number;
   onBack: () => void;
   onAddMore: () => void;
+  onAddEnrichment: (type: EnrichmentType) => void;
 }
 
 function BackIcon() {
@@ -103,11 +115,137 @@ function PlayIcon() {
   );
 }
 
-const sections = [
-  { type: 'notes' as const, title: 'Notes', preview: '3 notes saved', time: '04:32' },
-  { type: 'scripture' as const, title: 'Scripture', preview: 'Psalm 42:1 · As the deer pants for streams of water…' },
-  { type: 'prayer' as const, title: 'Prayer', preview: 'Lord, thank you for your presence today…' },
-  { type: 'revelation' as const, title: 'Revelation', preview: 'Rest is not passive. It is an act of trust.' },
+const addOptions: (PlayerSheetAddOption & { type: EnrichmentType })[] = [
+  { type: 'scripture', label: 'Scripture' },
+  { type: 'prayer', label: 'Prayer' },
+  { type: 'revelation', label: 'Revelation' },
+  { type: 'reflection', label: 'Reflection' },
+];
+
+const noteTitles: Record<MomentNote['kind'], string> = {
+  prayer: 'Prayer',
+  revelation: 'Revelation',
+  reflection: 'Reflection',
+};
+
+/** Strip HTML tags (e.g. api.bible's `<p>`, `<span>`) to render as plain text. */
+function stripHtml(html: string): string {
+  return html
+    // Remove verse-number spans entirely (e.g. <span class="v">1</span>).
+    .replace(/<span[^>]*class="v"[^>]*>.*?<\/span>/g, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+interface SheetItem {
+  section: PlayerSheetSection;
+  detail: EnrichmentDetailData;
+}
+
+function formatAddedAt(iso: string): string | undefined {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return undefined;
+  return `Added ${d.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })}`;
+}
+
+function buildItems(
+  notes: MomentNote[],
+  scriptures: MomentScripture[],
+): SheetItem[] {
+  const result: SheetItem[] = [];
+
+  const recordingNotes = notes
+    .filter((n) => n.isDuringRecording)
+    .sort((a, b) => (a.timestamp ?? 0) - (b.timestamp ?? 0));
+  if (recordingNotes.length > 0) {
+    const first = recordingNotes[0]?.timestamp;
+    result.push({
+      section: {
+        type: 'notes',
+        title: 'Notes',
+        preview: `${recordingNotes.length} ${recordingNotes.length === 1 ? 'note' : 'notes'} saved`,
+        time: first !== undefined ? formatDuration(first) : undefined,
+      },
+      detail: {
+        label: 'Notes',
+        entries: recordingNotes.map((n) => ({
+          time: n.timestamp !== undefined ? formatDuration(n.timestamp) : undefined,
+          text: n.content,
+        })),
+      },
+    });
+  }
+
+  for (const s of scriptures) {
+    const text = s.text ? stripHtml(s.text) : '';
+    result.push({
+      section: {
+        type: 'scripture',
+        title: 'Scripture',
+        preview: text ? `${s.reference} · ${text}` : s.reference,
+      },
+      detail: {
+        label: 'Scripture',
+        quote: true,
+        body: text || s.reference,
+        reference: `${s.reference} · ${s.translation}`,
+        meta: s.note,
+      },
+    });
+  }
+
+  for (const n of notes.filter((note) => !note.isDuringRecording)) {
+    result.push({
+      section: { type: n.kind, title: noteTitles[n.kind], preview: n.content },
+      detail: {
+        label: noteTitles[n.kind],
+        body: n.content,
+        meta: formatAddedAt(n.createdAt),
+      },
+    });
+  }
+
+  return result;
+}
+
+const mockItems: SheetItem[] = [
+  {
+    section: { type: 'notes', title: 'Notes', preview: '3 notes saved', time: '04:32' },
+    detail: {
+      label: 'Notes',
+      entries: [
+        { time: '04:32', text: 'Peace over the exam' },
+        { time: '08:17', text: 'Thank you for today' },
+        { time: '11:08', text: 'Guide my steps' },
+      ],
+    },
+  },
+  {
+    section: { type: 'scripture', title: 'Scripture', preview: 'Psalm 42:1 · As the deer pants for streams of water…' },
+    detail: {
+      label: 'Scripture',
+      quote: true,
+      body: 'As the deer pants for streams of water, so my soul pants for you, my God.',
+      reference: 'Psalm 42:1 · NIV',
+    },
+  },
+  {
+    section: { type: 'prayer', title: 'Prayer', preview: 'Lord, thank you for your presence today…' },
+    detail: { label: 'Prayer', body: 'Lord, thank you for your presence today. Help me to rest in you.' },
+  },
+  {
+    section: { type: 'revelation', title: 'Revelation', preview: 'Rest is not passive. It is an act of trust.' },
+    detail: { label: 'Revelation', body: 'Rest is not passive. It is an act of trust.' },
+  },
 ];
 
 function formatDate(date: string): string {
@@ -129,7 +267,13 @@ function formatDuration(seconds: number): string {
 /**
  * Player (S9.dc.html): back/share, handwritten title, waveform, controls, sheet.
  */
-export function PlayerScreen({ momentId, onBack, onAddMore }: PlayerScreenProps) {
+export function PlayerScreen({
+  momentId,
+  reloadKey,
+  onBack,
+  onAddMore,
+  onAddEnrichment,
+}: PlayerScreenProps) {
   const insets = useSafeAreaInsets();
   const [expanded, setExpanded] = useState(false);
   const [moment, setMoment] = useState<Moment | null>(null);
@@ -147,6 +291,9 @@ export function PlayerScreen({ momentId, onBack, onAddMore }: PlayerScreenProps)
       () => {},
     );
   }, []);
+  const [notes, setNotes] = useState<MomentNote[]>([]);
+  const [scriptures, setScriptures] = useState<MomentScripture[]>([]);
+  const [openDetail, setOpenDetail] = useState<EnrichmentDetailData | null>(null);
 
   useEffect(() => {
     if (!momentId) return;
@@ -200,6 +347,30 @@ export function PlayerScreen({ momentId, onBack, onAddMore }: PlayerScreenProps)
     const target = Math.max(0, Math.min(status.duration, status.currentTime + seconds));
     player.seekTo(target);
   };
+
+  useEffect(() => {
+    if (!momentId) return;
+    let active = true;
+    Promise.all([listNotes(momentId), listScriptures(momentId)])
+      .then(([n, s]) => {
+        if (!active) return;
+        setNotes(n);
+        setScriptures(s);
+      })
+      .catch(() => {
+        // Leave the previous enrichments in place if the refetch fails.
+      });
+    return () => {
+      active = false;
+    };
+  }, [momentId, reloadKey]);
+
+  // Without a moment (design prototype) fall back to the mock sections.
+  const items = useMemo(
+    () => (momentId ? buildItems(notes, scriptures) : mockItems),
+    [momentId, notes, scriptures],
+  );
+  const sections = useMemo(() => items.map((i) => i.section), [items]);
 
   const title = moment?.title ?? 'Saturday morning worship';
   const date = moment ? formatDate(moment.date) : '10 October 2026';
@@ -309,6 +480,15 @@ export function PlayerScreen({ momentId, onBack, onAddMore }: PlayerScreenProps)
         onToggle={() => setExpanded((e) => !e)}
         sections={sections}
         onAddMore={onAddMore}
+        // Editing enrichments needs a saved moment to attach them to.
+        addOptions={momentId ? addOptions : undefined}
+        onAddOption={(type) => onAddEnrichment(type as EnrichmentType)}
+        onPressSection={(index) => setOpenDetail(items[index]?.detail ?? null)}
+      />
+
+      <EnrichmentDetail
+        detail={openDetail}
+        onClose={() => setOpenDetail(null)}
       />
     </View>
   );
