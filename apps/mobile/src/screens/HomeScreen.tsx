@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -10,6 +10,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { colors, fonts } from '@moments/ui';
 import { Orb, BottomNav, PaperGrain } from '@moments/ui';
+import { useAuth } from '../features/auth/AuthProvider';
+import { getProfile } from '../lib/profile';
 
 export interface HomeScreenProps {
   onRecord: () => void;
@@ -71,6 +73,29 @@ export function HomeScreen({
   onCollections,
 }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
+  const { session } = useAuth();
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    let active = true;
+    getProfile(userId)
+      .then((profile) => {
+        if (active && profile?.display_name) {
+          setDisplayName(profile.display_name);
+        }
+      })
+      .catch(() => {
+        // Ignore profile fetch errors; fall back to a generic greeting.
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  const greetingName = displayName ?? 'friend';
 
   return (
     <View style={styles.container}>
@@ -78,7 +103,7 @@ export function HomeScreen({
 
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Text style={styles.greeting}>
-          Good evening,{'\n'}Lys
+          Welcome back,{'\n'}{greetingName}
         </Text>
         <Pressable
           accessibilityRole="button"

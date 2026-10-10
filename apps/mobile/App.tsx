@@ -6,6 +6,7 @@ import { useMomentsFonts } from '@moments/ui';
 
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { ThemeProvider } from './src/theme/ThemeProvider';
+import { AuthProvider } from './src/features/auth/AuthProvider';
 
 export default function App() {
   const [fontsLoaded, fontError] = useMomentsFonts();
@@ -17,10 +18,12 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <NavigationContainer>
-          <StatusBar style="light" />
-          <RootNavigator />
-        </NavigationContainer>
+        <AuthProvider>
+          <NavigationContainer>
+            <StatusBar style="light" />
+            <RootNavigator />
+          </NavigationContainer>
+        </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
