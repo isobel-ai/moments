@@ -21,6 +21,8 @@ export interface UploadAudioInput {
     /** Duration in seconds. */
     duration: number;
     format: AudioFormat;
+    /** Optional original file name (defaults to the URI's last segment). */
+    fileName?: string;
 }
 
 export interface UploadAudioResult {
@@ -53,7 +55,9 @@ export async function uploadAudio(
     }
 
     const fileName =
-        input.uri.split('/').pop() ?? `recording-${Date.now()}.${input.format}`;
+        input.fileName ??
+        input.uri.split('/').pop() ??
+        `recording-${Date.now()}.${input.format}`;
     const path = `${user.id}/${fileName}`;
 
     const file = new File(input.uri);

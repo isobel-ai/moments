@@ -41,6 +41,11 @@ export function HomeScreen({ navigation }: Props) {
           variant="secondary"
           onPress={() => navigation.navigate('Upload')}
         />
+        <Button
+          label="Upload file"
+          variant="secondary"
+          onPress={() => navigation.navigate('UploadFile')}
+        />
       </View>
     </View>
   );
