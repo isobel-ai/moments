@@ -100,7 +100,7 @@ function HomeRoute({ navigation }: ScreenProps) {
   return (
     <HomeScreen
       onRecord={() => navigation.navigate('Recording')}
-      onOpenMoment={() => navigation.navigate('Player')}
+      onOpenMoment={(momentId) => navigation.navigate('Player', { momentId })}
       onSeeAll={() => navigation.navigate('Collections')}
       onImport={() => navigation.navigate('Import')}
       onCollections={() => navigation.navigate('Collections')}
