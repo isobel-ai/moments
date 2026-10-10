@@ -9,6 +9,8 @@ import {
 } from 'expo-audio';
 import type { AudioAsset, AudioFormat } from '@moments/types';
 
+import { supabase } from './supabase';
+
 export interface RecordingResult {
   uri: string;
   duration: number;
@@ -153,4 +155,27 @@ export async function getAudioDuration(uri: string): Promise<number> {
       }
     });
   });
+}
+
+const SIGNED_URL_FUNCTION = 'signed-url';
+const AUDIO_BUCKET = 'audio';
+
+/**
+ * Requests a short-lived signed URL for a private audio object so it can be
+ * streamed by the audio player. Files stay private; the client never gets a
+ * permanent URL.
+ */
+export async function getSignedAudioUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.functions.invoke<{ signedUrl: string }>(
+    SIGNED_URL_FUNCTION,
+    {
+      body: { bucket: AUDIO_BUCKET, path },
+    },
+  );
+
+  if (error || !data) {
+    throw new Error(error?.message || 'Failed to get a signed audio URL');
+  }
+
+  return data.signedUrl;
 }
