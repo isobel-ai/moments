@@ -27,12 +27,20 @@ const recentMoments = [
 
 function CollectionsIcon() {
   return (
-    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <Svg width="26" height="26" viewBox="0 0 24 24" fill="none">
       <Path
-        d="M4 6 L4 18 M8 6 L8 18 M12 6 L12 18 M16 6 L16 18 M20 6 L20 18"
+        d="M3 4h18v5H3z"
         stroke={colors.cobalt}
-        strokeWidth="1.6"
+        strokeWidth="1.4"
         strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4"
+        stroke={colors.cobalt}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </Svg>
   );

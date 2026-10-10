@@ -97,7 +97,18 @@ const sections = [
 export function PlayerScreen({ onBack, onAddMore }: PlayerScreenProps) {
   const insets = useSafeAreaInsets();
   const [expanded, setExpanded] = useState(false);
-  const bars = makeWaveformBars(64, 200, 5, colors.playerBar);
+  const bars = makeWaveformBars(64, 200, 5, colors.playerBar, {
+    frequency: 1.6,
+    phase: -0.9,
+    power: 1.4,
+    wave: 12,
+    waveFrequency: 1.2,
+    wavePhase: 0.3,
+    minHeight: 6,
+    playhead: 0.355,
+    playedOpacity: 1,
+    unplayedOpacity: 0.28,
+  });
 
   return (
     <View style={styles.container}>

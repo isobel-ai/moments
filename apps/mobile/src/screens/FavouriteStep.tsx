@@ -36,7 +36,15 @@ function PlayIcon() {
  * boxes and an optional title.
  */
 export function FavouriteStep({ onBack, onSave, onNext }: FavouriteStepProps) {
-  const bars = makeWaveformBars(64, 120, 11, colors.favouriteBar);
+  const bars = makeWaveformBars(64, 120, 11, colors.favouriteBar, {
+    frequency: 1.6,
+    phase: -0.9,
+    power: 1.4,
+    wave: 10,
+    waveFrequency: 1.2,
+    wavePhase: 0.3,
+    minHeight: 6,
+  });
 
   return (
     <StepLayout

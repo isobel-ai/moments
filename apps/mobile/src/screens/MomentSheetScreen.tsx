@@ -82,7 +82,18 @@ const notes = [
  */
 export function MomentSheetScreen({ onBack, onAddMore }: MomentSheetScreenProps) {
   const insets = useSafeAreaInsets();
-  const bars = makeWaveformBars(64, 60, 5, colors.playerBar);
+  const bars = makeWaveformBars(64, 60, 5, colors.playerBar, {
+    frequency: 1.6,
+    phase: -0.9,
+    power: 1.4,
+    wave: 8,
+    waveFrequency: 1.2,
+    wavePhase: 0.3,
+    minHeight: 5,
+    playhead: 0.355,
+    playedOpacity: 1,
+    unplayedOpacity: 0.28,
+  });
 
   return (
     <View style={styles.container}>

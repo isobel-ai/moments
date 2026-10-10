@@ -13,6 +13,7 @@ import { colors, fonts, makeMiniBars } from '@moments/ui';
 import { PlayerCard, NoteRow, PaperGrain } from '@moments/ui';
 
 export interface ReviewScreenProps {
+  onBack: () => void;
   onSave: () => void;
 }
 
@@ -21,6 +22,20 @@ const notes = [
   { time: '08:17', text: 'Thank you for today' },
   { time: '11:08', text: 'Guide my steps' },
 ];
+
+function BackIcon() {
+  return (
+    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 6 L9 12 L15 18"
+        stroke={colors.cobalt}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 function CheckIcon() {
   return (
@@ -39,13 +54,25 @@ function CheckIcon() {
 /**
  * Review (S5.dc.html): editable title, compact player, notes list, Save Moment.
  */
-export function ReviewScreen({ onSave }: ReviewScreenProps) {
+export function ReviewScreen({ onBack, onSave }: ReviewScreenProps) {
   const insets = useSafeAreaInsets();
-  const bars = makeMiniBars(44, 36, 3);
+  const bars = makeMiniBars(44, 36, 3, colors.playerBar, {
+    wave: 4,
+    minHeight: 3,
+  });
 
   return (
     <View style={styles.container}>
       <PaperGrain opacity={0.35} />
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+        onPress={onBack}
+        style={[styles.back, { top: insets.top + 16 }]}
+      >
+        <BackIcon />
+      </Pressable>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -93,6 +120,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.warmWhite,
+  },
+  back: {
+    position: 'absolute',
+    left: 20,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
   },
   scroll: {
     paddingHorizontal: 28,

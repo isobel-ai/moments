@@ -50,7 +50,11 @@ function StopIcon() {
 export function NoteSavedScreen({ onAddNote, onStop }: NoteSavedScreenProps) {
   const insets = useSafeAreaInsets();
   const toastOpacity = useRef(new Animated.Value(0)).current;
-  const bars = useRef(makeWaveformBars(68, 250, 7, colors.recordingBar)).current;
+  const bars = useRef(
+    makeWaveformBars(68, 250, 7, colors.recordingBar, {
+      accentColor: colors.recordingBarAccent,
+    }),
+  ).current;
 
   useEffect(() => {
     Animated.sequence([

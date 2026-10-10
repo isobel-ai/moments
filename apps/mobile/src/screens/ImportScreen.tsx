@@ -6,10 +6,25 @@ import { colors, fonts, radii } from '@moments/ui';
 import { BottomNav, PaperGrain } from '@moments/ui';
 
 export interface ImportScreenProps {
+  onBack: () => void;
   onChooseFiles: () => void;
   onVoiceMemos: () => void;
   onRecord: () => void;
   onCollections: () => void;
+}
+
+function BackIcon() {
+  return (
+    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 6 L9 12 L15 18"
+        stroke={colors.cobalt}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
 }
 
 function FilesIcon() {
@@ -43,6 +58,7 @@ function MicIcon() {
  * Import (S11a.dc.html): "Choose from Files" and "Voice Memos" cards.
  */
 export function ImportScreen({
+  onBack,
   onChooseFiles,
   onVoiceMemos,
   onRecord,
@@ -53,6 +69,15 @@ export function ImportScreen({
   return (
     <View style={styles.container}>
       <PaperGrain opacity={0.35} />
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+        onPress={onBack}
+        style={[styles.back, { top: insets.top + 16 }]}
+      >
+        <BackIcon />
+      </Pressable>
 
       <View style={[styles.header, { paddingTop: insets.top + 40 }]}>
         <Text style={styles.title}>Import</Text>
@@ -112,6 +137,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.warmWhite,
+  },
+  back: {
+    position: 'absolute',
+    left: 20,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
   },
   header: {
     paddingHorizontal: 28,

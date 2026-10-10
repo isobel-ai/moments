@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 import { colors, fonts } from '@moments/ui';
 import { Tile, PaperGrain } from '@moments/ui';
 
 export interface EnrichScreenProps {
+  onBack: () => void;
   onContinue: (selected: string[]) => void;
   onLater: () => void;
 }
@@ -17,10 +19,24 @@ const options = [
   'Reflection',
 ];
 
+function BackIcon() {
+  return (
+    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 6 L9 12 L15 18"
+        stroke={colors.cobalt}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 /**
  * Enrich (S7.dc.html): two-column grid of selectable tiles.
  */
-export function EnrichScreen({ onContinue, onLater }: EnrichScreenProps) {
+export function EnrichScreen({ onBack, onContinue, onLater }: EnrichScreenProps) {
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<string[]>([
     'Scripture',
@@ -39,6 +55,15 @@ export function EnrichScreen({ onContinue, onLater }: EnrichScreenProps) {
   return (
     <View style={styles.container}>
       <PaperGrain opacity={0.35} />
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+        onPress={onBack}
+        style={[styles.back, { top: insets.top + 16 }]}
+      >
+        <BackIcon />
+      </Pressable>
 
       <View style={[styles.content, { paddingTop: insets.top + 60 }]}>
         <Text style={styles.title}>
@@ -84,6 +109,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.warmWhite,
+  },
+  back: {
+    position: 'absolute',
+    left: 20,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
   },
   content: {
     flex: 1,

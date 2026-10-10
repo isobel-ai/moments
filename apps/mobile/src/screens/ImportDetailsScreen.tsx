@@ -37,7 +37,10 @@ function BackIcon() {
  */
 export function ImportDetailsScreen({ onBack, onImport }: ImportDetailsScreenProps) {
   const insets = useSafeAreaInsets();
-  const bars = makeMiniBars(52, 40, 9, colors.importDetailsBar);
+  const bars = makeMiniBars(52, 40, 9, colors.importDetailsBar, {
+    wave: 4,
+    minHeight: 3,
+  });
 
   return (
     <View style={styles.container}>

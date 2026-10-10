@@ -13,6 +13,7 @@ import { colors, fonts, makeMiniBars } from '@moments/ui';
 import { BottomNav, PaperGrain, Waveform } from '@moments/ui';
 
 export interface CollectionsScreenProps {
+  onBack: () => void;
   onOpenMoment: () => void;
   onRecord: () => void;
   onImport: () => void;
@@ -25,6 +26,20 @@ const moments = [
   { title: 'Spontaneous flow', date: '4 October 2026', duration: '06:40', privacy: 'Private' },
   { title: 'Sunday worship', date: '2 October 2026', duration: '14:02', privacy: 'Private' },
 ];
+
+function BackIcon() {
+  return (
+    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 6 L9 12 L15 18"
+        stroke={colors.cobalt}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 function Arrow() {
   return (
@@ -44,6 +59,7 @@ function Arrow() {
  * Collections (S10.dc.html): search, filter, list of Moment cards, bottom nav.
  */
 export function CollectionsScreen({
+  onBack,
   onOpenMoment,
   onRecord,
   onImport,
@@ -53,6 +69,15 @@ export function CollectionsScreen({
   return (
     <View style={styles.container}>
       <PaperGrain opacity={0.35} />
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+        onPress={onBack}
+        style={[styles.back, { top: insets.top + 16 }]}
+      >
+        <BackIcon />
+      </Pressable>
 
       <View style={[styles.header, { paddingTop: insets.top + 40 }]}>
         <Text style={styles.title}>Collections</Text>
@@ -86,7 +111,10 @@ export function CollectionsScreen({
           >
             <View style={styles.thumb}>
               <Waveform
-                bars={makeMiniBars(12, 40, index + 1, colors.collectionsCardWave)}
+                bars={makeMiniBars(12, 40, index + 1, colors.collectionsCardWave, {
+                  wave: 4,
+                  minHeight: 3,
+                })}
                 height={40}
                 barWidth={2}
                 gap={2}
@@ -122,6 +150,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.warmWhite,
+  },
+  back: {
+    position: 'absolute',
+    left: 20,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
   },
   header: {
     paddingHorizontal: 28,

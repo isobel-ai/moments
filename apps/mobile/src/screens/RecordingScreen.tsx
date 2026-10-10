@@ -12,8 +12,23 @@ import { colors, fonts, makeWaveformBars } from '@moments/ui';
 import { Waveform } from '@moments/ui';
 
 export interface RecordingScreenProps {
+  onBack: () => void;
   onAddNote: () => void;
   onStop: () => void;
+}
+
+function BackIcon() {
+  return (
+    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 6 L9 12 L15 18"
+        stroke={colors.recordingControl}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
 }
 
 function PauseIcon() {
@@ -48,11 +63,15 @@ function StopIcon() {
  * Recording (S3.dc.html): navy screen with timer, live waveform, Add notes and
  * Pause/Stop controls.
  */
-export function RecordingScreen({ onAddNote, onStop }: RecordingScreenProps) {
+export function RecordingScreen({ onBack, onAddNote, onStop }: RecordingScreenProps) {
   const insets = useSafeAreaInsets();
-  const [seconds, setSeconds] = useState(272); // 04:32
-  const [ms, setMs] = useState(284);
-  const bars = useRef(makeWaveformBars(68, 250, 7, colors.recordingBar)).current;
+  const [seconds, setSeconds] = useState(0); // starts at 00:00
+  const [ms, setMs] = useState(0);
+  const bars = useRef(
+    makeWaveformBars(68, 250, 7, colors.recordingBar, {
+      accentColor: colors.recordingBarAccent,
+    }),
+  ).current;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -72,6 +91,15 @@ export function RecordingScreen({ onAddNote, onStop }: RecordingScreenProps) {
 
   return (
     <View style={styles.container}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+        onPress={onBack}
+        style={[styles.back, { top: insets.top + 16 }]}
+      >
+        <BackIcon />
+      </Pressable>
+
       <View style={[styles.timerWrap, { paddingTop: insets.top + 112 }]}>
         <View style={styles.timerRow}>
           <Text style={styles.timer}>
@@ -127,6 +155,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.recordingBgMid,
+  },
+  back: {
+    position: 'absolute',
+    left: 20,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   timerWrap: {
     alignItems: 'center',

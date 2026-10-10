@@ -79,6 +79,7 @@ function HomeRoute({ navigation }: ScreenProps) {
 function RecordingRoute({ navigation }: ScreenProps) {
   return (
     <RecordingScreen
+      onBack={() => navigation.navigate('Home')}
       onAddNote={() => navigation.navigate('AddNote')}
       onStop={() => navigation.navigate('Review')}
     />
@@ -104,7 +105,12 @@ function NoteSavedRoute({ navigation }: ScreenProps) {
 }
 
 function ReviewRoute({ navigation }: ScreenProps) {
-  return <ReviewScreen onSave={() => navigation.navigate('Saving')} />;
+  return (
+    <ReviewScreen
+      onBack={() => navigation.navigate('Recording')}
+      onSave={() => navigation.navigate('Saving')}
+    />
+  );
 }
 
 function SavingRoute({ navigation }: ScreenProps) {
@@ -114,6 +120,7 @@ function SavingRoute({ navigation }: ScreenProps) {
 function EnrichRoute({ navigation }: ScreenProps) {
   return (
     <EnrichScreen
+      onBack={() => navigation.navigate('Home')}
       onContinue={(selected) => {
         const hasFavourite = selected.includes('Favourite Moment');
         if (hasFavourite) {
@@ -207,6 +214,7 @@ function MomentSheetRoute({ navigation }: ScreenProps) {
 function CollectionsRoute({ navigation }: ScreenProps) {
   return (
     <CollectionsScreen
+      onBack={() => navigation.navigate('Home')}
       onOpenMoment={() => navigation.navigate('Player')}
       onRecord={() => navigation.navigate('Recording')}
       onImport={() => navigation.navigate('Import')}
@@ -217,6 +225,7 @@ function CollectionsRoute({ navigation }: ScreenProps) {
 function ImportRoute({ navigation }: ScreenProps) {
   return (
     <ImportScreen
+      onBack={() => navigation.navigate('Home')}
       onChooseFiles={() => navigation.navigate('ImportDetails')}
       onVoiceMemos={() => navigation.navigate('ImportDetails')}
       onRecord={() => navigation.navigate('Recording')}
