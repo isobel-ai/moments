@@ -264,6 +264,28 @@ export const colors = {
   importDetailsHint: '#556789',
   importDetailsButton: '#3156B8',
   importDetailsButtonText: '#FFFFFF',
+
+  // Legacy aliases (kept for the functional data-layer screens from main).
+  background: '#0E0D0B',
+  surface: '#1A1815',
+  surfaceElevated: '#24211C',
+  surfaceOverlay: 'rgba(14, 13, 11, 0.92)',
+  text: '#F5F1E8',
+  textMuted: '#7A7264',
+  brand: '#E8B44A',
+  brandSoft: '#F2CE8A',
+  brandDeep: '#B8862B',
+  accent: '#7FB8A4',
+  accentSoft: '#A9D4C4',
+  success: '#6FBF8B',
+  warning: '#E8B44A',
+  danger: '#E06C5B',
+  info: '#7FB8A4',
+  border: '#2E2A23',
+  borderStrong: '#3D382E',
+  waveform: '#E8B44A',
+  waveformPlayed: '#F2CE8A',
+  waveformRemaining: '#3D382E',
 } as const;
 
 export type Color = keyof typeof colors;
@@ -335,6 +357,15 @@ export const radii = {
   roundControl: 72,
   navOrb: 68,
   saveOrb: 92,
+
+  // Legacy aliases (kept for the functional data-layer screens from main).
+  none: 0,
+  sm: 4,
+  md: 8,
+  lg: 12,
+  xl: 16,
+  xxl: 24,
+  full: 9999,
 } as const;
 
 export type Radius = keyof typeof radii;
@@ -342,6 +373,17 @@ export type Radius = keyof typeof radii;
 export const spacing = {
   screenPadding: 24,
   minTouchTarget: 44,
+
+  // Legacy aliases (kept for the functional data-layer screens from main).
+  xxs: 2,
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  xxl: 32,
+  xxxl: 48,
+  huge: 64,
 } as const;
 
 export type Spacing = keyof typeof spacing;

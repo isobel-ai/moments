@@ -30,6 +30,10 @@ export interface MomentScripture {
   id: string;
   /** e.g. "John 3:16" */
   reference: string;
+  /** The api.bible passage key, e.g. "JHN.3.1-JHN.3.16". */
+  passageKey: string;
+  /** The api.bible bibleId for the translation, e.g. "de4e12af7f28f599". */
+  bibleId: string;
   /** The translation code, e.g. "NIV", "ESV", "KJV". */
   translation: string;
   /** The verse text, if captured. */
@@ -42,8 +46,7 @@ export interface MomentScripture {
 export type MomentNoteKind =
   | 'prayer'
   | 'revelation'
-  | 'reflection'
-  | 'highlight';
+  | 'reflection';
 
 /** A note attached to a Moment. */
 export interface MomentNote {

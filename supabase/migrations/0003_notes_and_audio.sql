@@ -13,15 +13,14 @@
 create type public.moment_note_kind as enum (
   'prayer',
   'revelation',
-  'reflection',
-  'highlight'
+  'reflection'
 );
 
 -- ----------------------------------------------------------------------------
 -- moment_notes
 -- ----------------------------------------------------------------------------
 -- A single table for every note attached to a moment. A note can be captured
--- during the recording (highlight, with a timestamp) or added after the fact
+-- during the recording (with a timestamp) or added after the fact
 -- (prayer, revelation, reflection).
 
 create table if not exists public.moment_notes (
