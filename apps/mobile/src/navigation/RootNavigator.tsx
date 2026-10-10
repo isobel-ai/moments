@@ -13,7 +13,7 @@ export type RootStackParamList = {
   Home: undefined;
   Upload: undefined;
   UploadFile: undefined;
-  MomentDetail: { momentId: string };
+  MomentDetail: { momentId: string; openNoteForm?: boolean };
   AddScripture: { momentId: string };
   SignIn: undefined;
 };

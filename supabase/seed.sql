@@ -144,9 +144,9 @@ insert into
     public.moment_notes (moment_id, kind, is_during_recording, timestamp, content)
 values (
         '10000000-0000-0000-0000-000000000001',
-        'highlight',
-        true,
-        42,
+        'reflection',
+        false,
+        null,
         'The moment of stillness'
     )
 on conflict do nothing;

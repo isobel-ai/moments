@@ -46,8 +46,7 @@ export interface MomentScripture {
 export type MomentNoteKind =
   | 'prayer'
   | 'revelation'
-  | 'reflection'
-  | 'highlight';
+  | 'reflection';
 
 /** A note attached to a Moment. */
 export interface MomentNote {
