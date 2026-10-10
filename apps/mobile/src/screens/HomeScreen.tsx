@@ -12,6 +12,8 @@ import { colors, fonts } from '@moments/ui';
 import { Orb, BottomNav, PaperGrain } from '@moments/ui';
 import { useAuth } from '../features/auth/AuthProvider';
 import { getProfile } from '../lib/profile';
+import { listMoments } from '../lib/moments';
+import type { Moment } from '@moments/types';
 
 export interface HomeScreenProps {
   onRecord: () => void;
@@ -19,13 +21,8 @@ export interface HomeScreenProps {
   onSeeAll: () => void;
   onImport: () => void;
   onCollections: () => void;
+  onSignOut: () => void;
 }
-
-const recentMoments = [
-  { title: 'Saturday morning worship', time: 'Today, 10:00am' },
-  { title: 'Quiet time', time: 'Thursday, 6:30am' },
-  { title: 'Night prayer', time: 'Tuesday, 9:15pm' },
-];
 
 function CollectionsIcon() {
   return (
@@ -46,6 +43,49 @@ function CollectionsIcon() {
       />
     </Svg>
   );
+}
+
+function SignOutIcon() {
+  return (
+    <Svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+        stroke={colors.cobalt}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M16 17l5-5-5-5M21 12H9"
+        stroke={colors.cobalt}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+/** Formats an ISO date string into a short, human-friendly label. */
+function formatMomentDate(date: string): string {
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return date;
+
+  const today = new Date();
+  const isToday =
+    d.getFullYear() === today.getFullYear() &&
+    d.getMonth() === today.getMonth() &&
+    d.getDate() === today.getDate();
+
+  if (isToday) {
+    return `Today, ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  }
+
+  return d.toLocaleDateString([], {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 function Chevron() {
@@ -71,10 +111,12 @@ export function HomeScreen({
   onSeeAll,
   onImport,
   onCollections,
+  onSignOut,
 }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
-  const { session } = useAuth();
+  const { session, signOut } = useAuth();
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [moments, setMoments] = useState<Moment[]>([]);
 
   useEffect(() => {
     const userId = session?.user?.id;
@@ -90,12 +132,22 @@ export function HomeScreen({
       .catch(() => {
         // Ignore profile fetch errors; fall back to a generic greeting.
       });
+
+    listMoments(userId)
+      .then((data) => {
+        if (active) setMoments(data);
+      })
+      .catch(() => {
+        // Ignore moment fetch errors; show an empty Recent Moments row.
+      });
+
     return () => {
       active = false;
     };
   }, [session]);
 
   const greetingName = displayName ?? 'friend';
+  const recentMoments = moments.slice(0, 3);
 
   return (
     <View style={styles.container}>
@@ -105,14 +157,24 @@ export function HomeScreen({
         <Text style={styles.greeting}>
           Welcome back,{'\n'}{greetingName}
         </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Collections"
-          onPress={onCollections}
-          style={styles.headerIcon}
-        >
-          <CollectionsIcon />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Collections"
+            onPress={onCollections}
+            style={styles.headerIcon}
+          >
+            <CollectionsIcon />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sign out"
+            onPress={onSignOut}
+            style={styles.headerIcon}
+          >
+            <SignOutIcon />
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView
@@ -149,22 +211,30 @@ export function HomeScreen({
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.recentRow}
         >
-          {recentMoments.map((moment) => (
-            <Pressable
-              key={moment.title}
-              accessibilityRole="button"
-              onPress={onOpenMoment}
-              style={styles.recentCard}
-            >
-              <View style={styles.recentCardBody}>
-                <Text style={styles.recentCardTitle} numberOfLines={1}>
-                  {moment.title}
-                </Text>
-                <Text style={styles.recentCardTime}>{moment.time}</Text>
-              </View>
-              <Chevron />
-            </Pressable>
-          ))}
+          {recentMoments.length === 0 ? (
+            <Text style={styles.recentEmpty}>
+              No moments yet. Press the orb to record your first one.
+            </Text>
+          ) : (
+            recentMoments.map((moment) => (
+              <Pressable
+                key={moment.id}
+                accessibilityRole="button"
+                onPress={onOpenMoment}
+                style={styles.recentCard}
+              >
+                <View style={styles.recentCardBody}>
+                  <Text style={styles.recentCardTitle} numberOfLines={1}>
+                    {moment.title}
+                  </Text>
+                  <Text style={styles.recentCardTime}>
+                    {formatMomentDate(moment.date)}
+                  </Text>
+                </View>
+                <Chevron />
+              </Pressable>
+            ))
+          )}
         </ScrollView>
       </ScrollView>
 
@@ -204,6 +274,11 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   scroll: {
     paddingHorizontal: 28,
@@ -252,6 +327,12 @@ const styles = StyleSheet.create({
   recentRow: {
     gap: 14,
     paddingRight: 28,
+  },
+  recentEmpty: {
+    fontFamily: fonts.ui,
+    fontSize: 14,
+    color: colors.textSecondary,
+    paddingVertical: 24,
   },
   recentCard: {
     width: 292,

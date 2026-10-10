@@ -14,6 +14,7 @@ import { colors, fonts, makeMiniBars } from '@moments/ui';
 import { BottomNav, PaperGrain, Waveform } from '@moments/ui';
 import type { Moment, MomentType } from '@moments/types';
 import { listMoments } from '../lib/moments';
+import { useAuth } from '../features/auth/AuthProvider';
 
 export interface CollectionsScreenProps {
   onBack: () => void;
@@ -87,6 +88,7 @@ export function CollectionsScreen({
   onImport,
 }: CollectionsScreenProps) {
   const insets = useSafeAreaInsets();
+  const { session } = useAuth();
 
   const [moments, setMoments] = useState<Moment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,8 +98,11 @@ export function CollectionsScreen({
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+
     let active = true;
-    listMoments()
+    listMoments(userId)
       .then((data) => {
         if (active) {
           setMoments(data);

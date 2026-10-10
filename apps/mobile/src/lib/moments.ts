@@ -41,10 +41,11 @@ function normalizeMoment(row: Record<string, unknown>): Moment {
   } as Moment;
 }
 
-export async function listMoments(): Promise<Moment[]> {
+export async function listMoments(userId: string): Promise<Moment[]> {
   const { data, error } = await supabase
     .from(MOMENTS_TABLE)
     .select('*, moments_audio(*)')
+    .eq('user_id', userId)
     .order('date', { ascending: false });
 
   if (error) throw error;

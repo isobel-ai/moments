@@ -31,6 +31,7 @@ export interface SignInUpScreenProps {
 export function SignInUpScreen({ onBack, onAuthenticated }: SignInUpScreenProps) {
   const insets = useSafeAreaInsets();
   const { signIn, signUp } = useAuth();
+  const [mode, setMode] = useState<'signin' | 'signup'>('signup');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,16 +39,17 @@ export function SignInUpScreen({ onBack, onAuthenticated }: SignInUpScreenProps)
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isSignUp = mode === 'signup';
+
   const canSubmit =
-    name.trim().length > 0 &&
     email.trim().length > 0 &&
     password.length > 0 &&
-    confirm.length > 0 &&
+    (!isSignUp || (name.trim().length > 0 && confirm.length > 0)) &&
     !submitting;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
-    if (password !== confirm) {
+    if (isSignUp && password !== confirm) {
       setError('Passwords do not match.');
       return;
     }
@@ -55,19 +57,10 @@ export function SignInUpScreen({ onBack, onAuthenticated }: SignInUpScreenProps)
     setSubmitting(true);
     setError(null);
     try {
-      // Try to create an account first; if the email is already registered,
-      // fall back to signing in.
-      try {
+      if (isSignUp) {
         await signUp(email.trim(), password, name.trim());
-      } catch (signUpError) {
-        const message = signUpError instanceof Error ? signUpError.message : '';
-        const alreadyExists =
-          /already registered|already been registered|user already/i.test(message);
-        if (alreadyExists) {
-          await signIn(email.trim(), password);
-        } else {
-          throw signUpError;
-        }
+      } else {
+        await signIn(email.trim(), password);
       }
       onAuthenticated();
     } catch (err) {
@@ -77,6 +70,11 @@ export function SignInUpScreen({ onBack, onAuthenticated }: SignInUpScreenProps)
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const switchMode = (next: 'signin' | 'signup') => {
+    setMode(next);
+    setError(null);
   };
 
   return (
@@ -103,24 +101,30 @@ export function SignInUpScreen({ onBack, onAuthenticated }: SignInUpScreenProps)
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>Create your account</Text>
+        <Text style={styles.title}>
+          {isSignUp ? 'Create your account' : 'Welcome back'}
+        </Text>
         <Text style={styles.subtitle}>
-          A quiet place to keep what God is doing.
+          {isSignUp
+            ? 'A quiet place to keep what God is doing.'
+            : 'Pick up where you left off.'}
         </Text>
 
         <View style={styles.fields}>
-          <View style={styles.field}>
-            <Text style={styles.label}>Name</Text>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="Your name"
-              placeholderTextColor={colors.placeholder}
-              autoCapitalize="words"
-              autoComplete="name"
-              style={styles.input}
-            />
-          </View>
+          {isSignUp ? (
+            <View style={styles.field}>
+              <Text style={styles.label}>Name</Text>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder="Your name"
+                placeholderTextColor={colors.placeholder}
+                autoCapitalize="words"
+                autoComplete="name"
+                style={styles.input}
+              />
+            </View>
+          ) : null}
 
           <View style={styles.field}>
             <Text style={styles.label}>Email</Text>
@@ -149,25 +153,39 @@ export function SignInUpScreen({ onBack, onAuthenticated }: SignInUpScreenProps)
             />
           </View>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Confirm password</Text>
-            <TextInput
-              value={confirm}
-              onChangeText={setConfirm}
-              placeholder="••••••••"
-              placeholderTextColor={colors.placeholder}
-              secureTextEntry
-              autoCapitalize="none"
-              style={styles.input}
-            />
-          </View>
+          {isSignUp ? (
+            <View style={styles.field}>
+              <Text style={styles.label}>Confirm password</Text>
+              <TextInput
+                value={confirm}
+                onChangeText={setConfirm}
+                placeholder="••••••••"
+                placeholderTextColor={colors.placeholder}
+                secureTextEntry
+                autoCapitalize="none"
+                style={styles.input}
+              />
+            </View>
+          ) : null}
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => switchMode(isSignUp ? 'signin' : 'signup')}
+          style={styles.switch}
+        >
+          <Text style={styles.switchText}>
+            {isSignUp
+              ? 'Already have an account? Sign in'
+              : 'New here? Create an account'}
+          </Text>
+        </Pressable>
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 24 }]}>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <PillButton
-          label={submitting ? 'Please wait…' : 'Continue'}
+          label={submitting ? 'Please wait…' : isSignUp ? 'Create account' : 'Sign in'}
           onPress={handleSubmit}
           disabled={!canSubmit}
           style={!canSubmit ? styles.disabled : undefined}
@@ -222,6 +240,16 @@ const styles = StyleSheet.create({
   fields: {
     marginTop: 36,
     gap: 20,
+  },
+  switch: {
+    marginTop: 24,
+    alignSelf: 'center',
+    paddingVertical: 8,
+  },
+  switchText: {
+    fontFamily: fonts.uiMedium,
+    fontSize: 14,
+    color: colors.cobalt,
   },
   field: {
     gap: 8,

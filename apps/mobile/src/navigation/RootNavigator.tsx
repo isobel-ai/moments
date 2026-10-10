@@ -93,6 +93,7 @@ function SignInUpRoute({ navigation }: ScreenProps) {
 }
 
 function HomeRoute({ navigation }: ScreenProps) {
+  const { signOut } = useAuth();
   return (
     <HomeScreen
       onRecord={() => navigation.navigate('Recording')}
@@ -100,6 +101,10 @@ function HomeRoute({ navigation }: ScreenProps) {
       onSeeAll={() => navigation.navigate('Collections')}
       onImport={() => navigation.navigate('Import')}
       onCollections={() => navigation.navigate('Collections')}
+      onSignOut={() => {
+        signOut();
+        navigation.navigate('Welcome');
+      }}
     />
   );
 }
