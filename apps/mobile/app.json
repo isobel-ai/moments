@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Moments",
+    "slug": "moments",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "moments",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0E0D0B"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.moments.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Moments uses the microphone to record audio for your Moments.",
+        "UIBackgroundModes": [
+          "audio"
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0E0D0B"
+      },
+      "package": "com.moments.app",
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Moments uses the microphone to record audio for your Moments."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "00000000-0000-0000-0000-000000000000"
+      }
+    }
+  }
+}

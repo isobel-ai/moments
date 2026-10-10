@@ -1,0 +1,9 @@
+{
+  "extends": "@moments/config/tsconfig/react-native.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src"
+  ]
+}

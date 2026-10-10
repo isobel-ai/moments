@@ -1,0 +1,29 @@
+{
+  "name": "moments",
+  "version": "0.1.0",
+  "private": true,
+  "description": "An audio-first worship platform that captures and preserves the full story of an encounter with God.",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:mobile": "npm run start --workspace @moments/mobile",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:migrate": "supabase db reset",
+    "supabase:status": "supabase status",
+    "supabase:gen:types": "supabase gen types typescript --local > packages/types/src/supabase.ts"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "npm@10.9.0"
+}
