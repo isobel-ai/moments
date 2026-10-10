@@ -5,8 +5,7 @@ import {
   type TextProps,
   type TextStyle,
 } from 'react-native';
-import { colors } from '../tokens/colors';
-import { typography } from '../tokens/typography';
+import { colors, fonts } from '../theme';
 
 export type TextVariant =
   | 'display'
@@ -24,40 +23,40 @@ export interface AppTextProps extends TextProps {
 
 const variantStyles: Record<TextVariant, TextStyle> = {
   display: {
-    fontSize: typography.size.display,
-    fontWeight: typography.weight.bold,
-    lineHeight: typography.size.display * typography.lineHeight.tight,
+    fontFamily: fonts.heading,
+    fontSize: 36,
+    lineHeight: 38,
   },
   heading: {
-    fontSize: typography.size.heading,
-    fontWeight: typography.weight.bold,
-    lineHeight: typography.size.heading * typography.lineHeight.tight,
+    fontFamily: fonts.heading,
+    fontSize: 28,
+    lineHeight: 30,
   },
   title: {
-    fontSize: typography.size.title,
-    fontWeight: typography.weight.semibold,
-    lineHeight: typography.size.title * typography.lineHeight.normal,
+    fontFamily: fonts.uiMedium,
+    fontSize: 18,
+    lineHeight: 22,
   },
   body: {
-    fontSize: typography.size.body,
-    fontWeight: typography.weight.regular,
-    lineHeight: typography.size.body * typography.lineHeight.relaxed,
+    fontFamily: fonts.ui,
+    fontSize: 15,
+    lineHeight: 23,
   },
   bodyLarge: {
-    fontSize: typography.size.bodyLarge,
-    fontWeight: typography.weight.regular,
-    lineHeight: typography.size.bodyLarge * typography.lineHeight.relaxed,
+    fontFamily: fonts.ui,
+    fontSize: 17,
+    lineHeight: 25,
   },
   caption: {
-    fontSize: typography.size.caption,
-    fontWeight: typography.weight.medium,
-    lineHeight: typography.size.caption * typography.lineHeight.normal,
+    fontFamily: fonts.ui,
+    fontSize: 12,
+    lineHeight: 16,
   },
 };
 
 export function Text({
   variant = 'body',
-  color = colors.text,
+  color = colors.textBody,
   style,
   children,
   ...rest
