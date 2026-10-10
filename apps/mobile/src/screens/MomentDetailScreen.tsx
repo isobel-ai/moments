@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button, colors, spacing } from '@moments/ui';
-import type { Moment, MomentNote, MomentScripture } from '@moments/types';
+import type { Moment, MomentNote, MomentScripture, AudioAsset } from '@moments/types';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../navigation/RootNavigator';
-import { getMoment } from '../lib/moments';
+import { getMoment, getMomentAudio } from '../lib/moments';
 import { listNotes, listScriptures } from '../lib/notes';
+import { AudioPlayer } from '../components/AudioPlayer';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MomentDetail'>;
 
@@ -27,6 +28,7 @@ function stripHtml(html: string): string {
 export function MomentDetailScreen({ navigation, route }: Props) {
   const { momentId } = route.params;
   const [moment, setMoment] = useState<Moment | null>(null);
+  const [audio, setAudio] = useState<AudioAsset | null>(null);
   const [notes, setNotes] = useState<MomentNote[]>([]);
   const [scriptures, setScriptures] = useState<MomentScripture[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,10 +38,16 @@ export function MomentDetailScreen({ navigation, route }: Props) {
     let cancelled = false;
     setLoading(true);
     setError(undefined);
-    Promise.all([getMoment(momentId), listNotes(momentId), listScriptures(momentId)])
-      .then(([m, n, s]) => {
+    Promise.all([
+      getMoment(momentId),
+      getMomentAudio(momentId),
+      listNotes(momentId),
+      listScriptures(momentId),
+    ])
+      .then(([m, a, n, s]) => {
         if (cancelled) return;
         setMoment(m);
+        setAudio(a);
         setNotes(n);
         setScriptures(s);
       })
@@ -61,6 +69,10 @@ export function MomentDetailScreen({ navigation, route }: Props) {
         <Text variant="caption" color={colors.textMuted}>
           {moment.date}
         </Text>
+      ) : null}
+
+      {audio ? (
+        <AudioPlayer audio={audio} title={moment?.title} />
       ) : null}
 
       {error ? (
