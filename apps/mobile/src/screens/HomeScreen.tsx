@@ -28,7 +28,7 @@ export function HomeScreen({ navigation }: Props) {
               No Moments yet
             </Text>
             <Text variant="body" color={colors.textMuted}>
-              Record your first Moment to begin capturing the story.
+              Upload your first audio clip to begin capturing the story.
             </Text>
           </View>
         }
@@ -37,8 +37,9 @@ export function HomeScreen({ navigation }: Props) {
 
       <View style={styles.fab}>
         <Button
-          label="Record"
-          onPress={() => navigation.navigate('Record')}
+          label="Upload"
+          variant="secondary"
+          onPress={() => navigation.navigate('Upload')}
         />
       </View>
     </View>
@@ -73,5 +74,6 @@ const styles = StyleSheet.create({
     bottom: spacing.xxl,
     left: spacing.lg,
     right: spacing.lg,
+    gap: spacing.sm,
   },
 });

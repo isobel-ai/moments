@@ -3,13 +3,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { useAuth } from '../features/auth/AuthProvider';
 import { HomeScreen } from '../screens/HomeScreen';
-import { RecordScreen } from '../screens/RecordScreen';
+import { UploadScreen } from '../screens/UploadScreen';
 import { MomentDetailScreen } from '../screens/MomentDetailScreen';
 import { SignInScreen } from '../screens/SignInScreen';
 
 export type RootStackParamList = {
   Home: undefined;
-  Record: undefined;
+  Upload: undefined;
   MomentDetail: { momentId: string };
   SignIn: undefined;
 };
@@ -33,7 +33,7 @@ export function RootNavigator() {
       {session ? (
         <>
           <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="Record" component={RecordScreen} />
+          <Stack.Screen name="Upload" component={UploadScreen} />
           <Stack.Screen name="MomentDetail" component={MomentDetailScreen} />
         </>
       ) : (
