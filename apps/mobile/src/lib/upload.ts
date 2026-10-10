@@ -23,6 +23,8 @@ export interface UploadAudioInput {
     format: AudioFormat;
     /** Optional original file name (defaults to the URI's last segment). */
     fileName?: string;
+    /** Optional title for the created Moment (defaults to 'Audio recording'). */
+    title?: string;
 }
 
 export interface UploadAudioResult {
@@ -81,7 +83,7 @@ export async function uploadAudio(
             .from('moments')
             .insert({
                 user_id: user.id,
-                title: 'Audio recording',
+                title: input.title ?? 'Audio recording',
             })
             .select('id')
             .single();

@@ -25,6 +25,8 @@ import { CollectionsScreen } from '../screens/CollectionsScreen';
 import { ImportScreen } from '../screens/ImportScreen';
 import { ImportDetailsScreen } from '../screens/ImportDetailsScreen';
 import { useAuth } from '../features/auth/AuthProvider';
+import { uploadAudio } from '../lib/upload';
+import type { SelectedAudioFile } from '../lib/audio';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -48,12 +50,13 @@ export type RootStackParamList = {
   MomentSheet: undefined;
   Collections: undefined;
   Import: undefined;
-  ImportDetails: undefined;
+  ImportDetails: { file: SelectedAudioFile } | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-type ScreenProps = NativeStackScreenProps<RootStackParamList, keyof RootStackParamList>;
+type ScreenProps<T extends keyof RootStackParamList = keyof RootStackParamList> =
+  NativeStackScreenProps<RootStackParamList, T>;
 
 function SplashRoute({ navigation }: ScreenProps) {
   const { session, loading } = useAuth();
@@ -226,7 +229,7 @@ function CompleteRoute({ navigation }: ScreenProps) {
   );
 }
 
-function PlayerRoute({ navigation, route }: ScreenProps) {
+function PlayerRoute({ navigation, route }: ScreenProps<'Player'>) {
   return (
     <PlayerScreen
       momentId={route.params?.momentId}
@@ -260,19 +263,36 @@ function ImportRoute({ navigation }: ScreenProps) {
   return (
     <ImportScreen
       onBack={() => navigation.navigate('Home')}
-      onChooseFiles={() => navigation.navigate('ImportDetails')}
-      onVoiceMemos={() => navigation.navigate('ImportDetails')}
+      onChooseFiles={(file) => navigation.navigate('ImportDetails', { file })}
+      onVoiceMemos={(file) => navigation.navigate('ImportDetails', { file })}
       onRecord={() => navigation.navigate('Recording')}
       onCollections={() => navigation.navigate('Collections')}
     />
   );
 }
 
-function ImportDetailsRoute({ navigation }: ScreenProps) {
+function ImportDetailsRoute({ navigation, route }: ScreenProps<'ImportDetails'>) {
+  const file = route.params?.file ?? {
+    uri: '',
+    fileName: 'Audio file',
+    duration: 0,
+    format: 'm4a' as const,
+  };
+
   return (
     <ImportDetailsScreen
+      file={file}
       onBack={() => navigation.goBack()}
-      onImport={() => navigation.navigate('Saving')}
+      onImport={async (selected, title) => {
+        await uploadAudio({
+          uri: selected.uri,
+          duration: selected.duration,
+          format: selected.format,
+          fileName: selected.fileName,
+          title,
+        });
+        navigation.navigate('Saving');
+      }}
     />
   );
 }

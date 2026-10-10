@@ -7,6 +7,7 @@ import {
   type AudioRecorder,
   type AudioStatus,
 } from 'expo-audio';
+import * as DocumentPicker from 'expo-document-picker';
 import type { AudioAsset, AudioFormat } from '@moments/types';
 
 import { supabase } from './supabase';
@@ -112,6 +113,59 @@ export function detectAudioFormat(
   }
 
   return null;
+}
+
+/**
+ * An audio file selected from the device, ready to be imported.
+ */
+export interface SelectedAudioFile {
+  /** Local file URI (e.g. `file:///.../recording.m4a`). */
+  uri: string;
+  /** The original file name. */
+  fileName: string;
+  /** The file's MIME type, if known. */
+  mimeType?: string;
+  /** Size in bytes, if known. */
+  size?: number;
+  /** Duration in seconds. */
+  duration: number;
+  format: AudioFormat;
+}
+
+/**
+ * Opens the system document picker and returns the selected audio file.
+ * Returns `null` when the user cancels. Throws when the file is not a
+ * supported audio format or its duration cannot be read.
+ */
+export async function pickAudioFile(): Promise<SelectedAudioFile | null> {
+  const result = await DocumentPicker.getDocumentAsync({
+    type: ['audio/*', 'audio/m4a', 'audio/mp3', 'audio/wav', 'audio/aac', 'audio/ogg'],
+    copyToCacheDirectory: true,
+    multiple: false,
+  });
+
+  if (result.canceled) return null;
+
+  const asset = result.assets[0];
+  if (!asset) return null;
+
+  const format = detectAudioFormat(asset.name, asset.mimeType);
+  if (!format) {
+    throw new Error(
+      'This file type is not supported. Please choose an M4A, MP3, WAV, AAC or OGG file.',
+    );
+  }
+
+  const duration = await getAudioDuration(asset.uri);
+
+  return {
+    uri: asset.uri,
+    fileName: asset.name,
+    mimeType: asset.mimeType,
+    size: asset.size,
+    duration,
+    format,
+  };
 }
 
 /**

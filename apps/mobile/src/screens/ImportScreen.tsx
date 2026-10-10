@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { colors, fonts, radii } from '@moments/ui';
 import { BottomNav, PaperGrain } from '@moments/ui';
+import { pickAudioFile, type SelectedAudioFile } from '../lib/audio';
 
 export interface ImportScreenProps {
   onBack: () => void;
-  onChooseFiles: () => void;
-  onVoiceMemos: () => void;
+  onChooseFiles: (file: SelectedAudioFile) => void;
+  onVoiceMemos: (file: SelectedAudioFile) => void;
   onRecord: () => void;
   onCollections: () => void;
 }
@@ -65,6 +66,17 @@ export function ImportScreen({
   onCollections,
 }: ImportScreenProps) {
   const insets = useSafeAreaInsets();
+  const [error, setError] = useState<string | null>(null);
+
+  const handlePick = async (onSelected: (file: SelectedAudioFile) => void) => {
+    setError(null);
+    try {
+      const file = await pickAudioFile();
+      if (file) onSelected(file);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not open that file.');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -87,7 +99,7 @@ export function ImportScreen({
       <View style={styles.cards}>
         <Pressable
           accessibilityRole="button"
-          onPress={onChooseFiles}
+          onPress={() => handlePick(onChooseFiles)}
           style={styles.card}
         >
           <View style={styles.iconCircle}>
@@ -101,7 +113,7 @@ export function ImportScreen({
 
         <Pressable
           accessibilityRole="button"
-          onPress={onVoiceMemos}
+          onPress={() => handlePick(onVoiceMemos)}
           style={styles.card}
         >
           <View style={styles.iconCircle}>
@@ -113,6 +125,12 @@ export function ImportScreen({
           </View>
         </Pressable>
       </View>
+
+      {error ? (
+        <View style={styles.errorWrap}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : null}
 
       <View style={styles.handWrap}>
         <Text style={styles.hand}>
@@ -206,6 +224,15 @@ const styles = StyleSheet.create({
     fontFamily: fonts.handwriting,
     fontSize: 28,
     color: colors.importHand,
+  },
+  errorWrap: {
+    paddingHorizontal: 28,
+    marginTop: 20,
+  },
+  errorText: {
+    fontFamily: fonts.ui,
+    fontSize: 14,
+    color: colors.danger,
   },
   nav: {
     position: 'absolute',
