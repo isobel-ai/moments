@@ -1,47 +1,27 @@
 import React from 'react';
-import { StyleSheet, TextInput } from 'react-native';
-import { colors, fonts } from '@moments/ui';
-import { StepLayout } from './StepLayout';
+import { NoteStep } from './NoteStep';
 
 export interface RevelationStepProps {
   onBack: () => void;
   onSave: () => void;
   onNext: () => void;
+  momentId?: string;
+  onSaved?: () => void;
 }
 
 /**
  * Revelation step (S8c.dc.html): "What did God show you?"
  */
-export function RevelationStep({ onBack, onSave, onNext }: RevelationStepProps) {
+export function RevelationStep(props: RevelationStepProps) {
   return (
-    <StepLayout
+    <NoteStep
+      {...props}
+      kind="revelation"
       step={2}
       total={3}
       title="Revelation"
       subtitle="What did God show you?"
-      onBack={onBack}
-      onSave={onSave}
-      onNext={onNext}
-    >
-      <TextInput
-        multiline
-        placeholder="Rest is not passive. It is an act of trust."
-        placeholderTextColor={colors.placeholderHand}
-        style={styles.input}
-        textAlignVertical="top"
-      />
-    </StepLayout>
+      placeholder="Rest is not passive. It is an act of trust."
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  input: {
-    marginTop: 28,
-    fontFamily: fonts.handwriting,
-    fontSize: 32,
-    lineHeight: 44,
-    color: colors.stepFieldText,
-    padding: 0,
-    minHeight: 200,
-  },
-});

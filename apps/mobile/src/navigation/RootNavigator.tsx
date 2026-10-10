@@ -19,7 +19,7 @@ import { RevelationStep } from '../screens/RevelationStep';
 import { FavouriteStep } from '../screens/FavouriteStep';
 import { ReflectionStep } from '../screens/ReflectionStep';
 import { CompleteScreen } from '../screens/CompleteScreen';
-import { PlayerScreen } from '../screens/PlayerScreen';
+import { PlayerScreen, type EnrichmentType } from '../screens/PlayerScreen';
 import { MomentSheetScreen } from '../screens/MomentSheetScreen';
 import { CollectionsScreen } from '../screens/CollectionsScreen';
 import { ImportScreen } from '../screens/ImportScreen';
@@ -40,13 +40,15 @@ export type RootStackParamList = {
   Review: undefined;
   Saving: undefined;
   Enrich: undefined;
-  PrayerStep: undefined;
-  ScriptureStep: undefined;
-  RevelationStep: undefined;
+  // `momentId` opens the step as a standalone editor for an existing moment.
+  PrayerStep: { momentId?: string } | undefined;
+  ScriptureStep: { momentId?: string } | undefined;
+  RevelationStep: { momentId?: string } | undefined;
   FavouriteStep: undefined;
-  ReflectionStep: undefined;
+  ReflectionStep: { momentId?: string } | undefined;
   Complete: undefined;
-  Player: { momentId?: string } | undefined;
+  // `savedAt` changes after an enrichment is saved, prompting a refetch.
+  Player: { momentId?: string; savedAt?: number } | undefined;
   MomentSheet: undefined;
   Collections: undefined;
   Import: undefined;
@@ -170,32 +172,56 @@ function EnrichRoute({ navigation }: ScreenProps) {
   );
 }
 
-function PrayerStepRoute({ navigation }: ScreenProps) {
+function PrayerStepRoute({ navigation, route }: ScreenProps<'PrayerStep'>) {
   return (
     <PrayerStep
+      momentId={route.params?.momentId}
       onBack={() => navigation.goBack()}
       onSave={() => navigation.navigate('Player')}
       onNext={() => navigation.navigate('ScriptureStep')}
+      onSaved={() =>
+        // Return to the Player with a fresh `savedAt` so it refetches right away.
+        navigation.popTo('Player', {
+          momentId: route.params?.momentId,
+          savedAt: Date.now(),
+        })
+      }
     />
   );
 }
 
-function ScriptureStepRoute({ navigation }: ScreenProps) {
+function ScriptureStepRoute({ navigation, route }: ScreenProps<'ScriptureStep'>) {
   return (
     <ScriptureStep
+      momentId={route.params?.momentId}
       onBack={() => navigation.goBack()}
       onSave={() => navigation.navigate('Player')}
       onNext={() => navigation.navigate('RevelationStep')}
+      onSaved={() =>
+        // Return to the Player with a fresh `savedAt` so it refetches right away.
+        navigation.popTo('Player', {
+          momentId: route.params?.momentId,
+          savedAt: Date.now(),
+        })
+      }
     />
   );
 }
 
-function RevelationStepRoute({ navigation }: ScreenProps) {
+function RevelationStepRoute({ navigation, route }: ScreenProps<'RevelationStep'>) {
   return (
     <RevelationStep
+      momentId={route.params?.momentId}
       onBack={() => navigation.goBack()}
       onSave={() => navigation.navigate('Player')}
       onNext={() => navigation.navigate('Complete')}
+      onSaved={() =>
+        // Return to the Player with a fresh `savedAt` so it refetches right away.
+        navigation.popTo('Player', {
+          momentId: route.params?.momentId,
+          savedAt: Date.now(),
+        })
+      }
     />
   );
 }
@@ -210,12 +236,20 @@ function FavouriteStepRoute({ navigation }: ScreenProps) {
   );
 }
 
-function ReflectionStepRoute({ navigation }: ScreenProps) {
+function ReflectionStepRoute({ navigation, route }: ScreenProps<'ReflectionStep'>) {
   return (
     <ReflectionStep
+      momentId={route.params?.momentId}
       onBack={() => navigation.goBack()}
       onSave={() => navigation.navigate('Player')}
       onNext={() => navigation.navigate('Complete')}
+      onSaved={() =>
+        // Return to the Player with a fresh `savedAt` so it refetches right away.
+        navigation.popTo('Player', {
+          momentId: route.params?.momentId,
+          savedAt: Date.now(),
+        })
+      }
     />
   );
 }
@@ -229,12 +263,28 @@ function CompleteRoute({ navigation }: ScreenProps) {
   );
 }
 
+const enrichmentRoutes: Record<
+  EnrichmentType,
+  'ScriptureStep' | 'PrayerStep' | 'RevelationStep' | 'ReflectionStep'
+> = {
+  scripture: 'ScriptureStep',
+  prayer: 'PrayerStep',
+  revelation: 'RevelationStep',
+  reflection: 'ReflectionStep',
+};
+
 function PlayerRoute({ navigation, route }: ScreenProps<'Player'>) {
+  const momentId = route.params?.momentId;
+
   return (
     <PlayerScreen
-      momentId={route.params?.momentId}
+      momentId={momentId}
+      reloadKey={route.params?.savedAt}
       onBack={() => navigation.navigate('Home')}
       onAddMore={() => navigation.navigate('Enrich')}
+      onAddEnrichment={(type) =>
+        navigation.navigate(enrichmentRoutes[type], { momentId })
+      }
     />
   );
 }

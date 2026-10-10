@@ -28,14 +28,18 @@ export interface ScriptureSelection {
 
 interface ScripturePickerProps {
   onSelect: (selection: ScriptureSelection) => void;
-  onCancel: () => void;
+  /** Omit to hide the Cancel button (e.g. when the host screen has Back). */
+  onCancel?: () => void;
   saving?: boolean;
+  /** Hide the built-in heading when the host screen provides its own. */
+  showHeader?: boolean;
 }
 
 export function ScripturePicker({
   onSelect,
   onCancel,
   saving,
+  showHeader = true,
 }: ScripturePickerProps) {
   const [bibleId, setBibleId] = useState<string>(
     BIBLE_TRANSLATIONS[0]?.id ?? '',
@@ -188,10 +192,14 @@ export function ScripturePicker({
 
   return (
     <View style={styles.container}>
-      <Text variant="heading">Add Scripture</Text>
-      <Text variant="body" color={colors.textSecondary}>
-        Choose a passage to attach to this Moment.
-      </Text>
+      {showHeader ? (
+        <>
+          <Text variant="heading">Add Scripture</Text>
+          <Text variant="body" color={colors.textSecondary}>
+            Choose a passage to attach to this Moment.
+          </Text>
+        </>
+      ) : null}
 
       <Select
         label="Translation"
@@ -248,7 +256,9 @@ export function ScripturePicker({
           onPress={handleSubmit}
           disabled={!canSubmit || loading || saving}
         />
-        <Button label="Cancel" variant="ghost" onPress={onCancel} />
+        {onCancel ? (
+          <Button label="Cancel" variant="ghost" onPress={onCancel} />
+        ) : null}
       </View>
     </View>
   );

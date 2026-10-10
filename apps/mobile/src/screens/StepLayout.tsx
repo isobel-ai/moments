@@ -11,15 +11,19 @@ import { colors, fonts } from '@moments/ui';
 import { StepDots, PaperGrain } from '@moments/ui';
 
 export interface StepLayoutProps {
-  step: number;
-  total: number;
+  /** Omit step/total to hide the step dots (single-step editing). */
+  step?: number;
+  total?: number;
   title: string;
   subtitle: string;
   children: React.ReactNode;
   onBack: () => void;
-  onSave: () => void;
-  onNext: () => void;
+  /** Omit to hide the top Save action. */
+  onSave?: () => void;
+  /** Omit to hide the footer button. */
+  onNext?: () => void;
   nextLabel?: string;
+  nextDisabled?: boolean;
 }
 
 /**
@@ -36,22 +40,26 @@ export function StepLayout({
   onSave,
   onNext,
   nextLabel = 'Next',
+  nextDisabled,
 }: StepLayoutProps) {
   const insets = useSafeAreaInsets();
+  const showDots = step !== undefined && total !== undefined;
 
   return (
     <View style={styles.container}>
       <PaperGrain opacity={0.35} />
 
       <View style={[styles.top, { paddingTop: insets.top + 20 }]}>
-        <View style={styles.dotsRow}>
-          <StepDots total={total} current={step} />
-          <Text style={styles.count}>
-            {step + 1} of {total}
-          </Text>
-        </View>
+        {showDots && (
+          <View style={styles.dotsRow}>
+            <StepDots total={total} current={step} />
+            <Text style={styles.count}>
+              {step + 1} of {total}
+            </Text>
+          </View>
+        )}
 
-        <View style={styles.topActions}>
+        <View style={[styles.topActions, !showDots && styles.topActionsFlush]}>
           <Pressable
             accessibilityRole="button"
             onPress={onBack}
@@ -59,18 +67,21 @@ export function StepLayout({
           >
             <Text style={styles.actionText}>Back</Text>
           </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={onSave}
-            style={styles.action}
-          >
-            <Text style={styles.actionText}>Save</Text>
-          </Pressable>
+          {onSave && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={onSave}
+              style={styles.action}
+            >
+              <Text style={styles.actionText}>Save</Text>
+            </Pressable>
+          )}
         </View>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.scroll}
       >
         <Text style={styles.title}>{title}</Text>
@@ -78,15 +89,19 @@ export function StepLayout({
         {children}
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 24 }]}>
-        <Pressable
-          accessibilityRole="button"
-          onPress={onNext}
-          style={styles.next}
-        >
-          <Text style={styles.nextText}>{nextLabel}</Text>
-        </Pressable>
-      </View>
+      {onNext && (
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 24 }]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: nextDisabled }}
+            disabled={nextDisabled}
+            onPress={onNext}
+            style={[styles.next, nextDisabled && styles.nextDisabled]}
+          >
+            <Text style={styles.nextText}>{nextLabel}</Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
@@ -113,6 +128,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 16,
+  },
+  topActionsFlush: {
+    marginTop: 0,
   },
   action: {
     paddingVertical: 8,
@@ -152,6 +170,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.stepNext,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  nextDisabled: {
+    opacity: 0.5,
   },
   nextText: {
     fontFamily: fonts.uiMedium,
