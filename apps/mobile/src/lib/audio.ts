@@ -33,6 +33,7 @@ export function useRecorder() {
       playsInSilentMode: true,
     });
 
+    await recorder.prepareToRecordAsync();
     recorder.record();
   };
 
