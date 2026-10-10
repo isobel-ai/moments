@@ -12,6 +12,8 @@ import { colors, fonts } from '@moments/ui';
 import { Orb, BottomNav, PaperGrain } from '@moments/ui';
 import { useAuth } from '../features/auth/AuthProvider';
 import { getProfile } from '../lib/profile';
+import { listMoments } from '../lib/moments';
+import type { Moment } from '@moments/types';
 
 export interface HomeScreenProps {
   onRecord: () => void;
@@ -20,12 +22,6 @@ export interface HomeScreenProps {
   onImport: () => void;
   onCollections: () => void;
 }
-
-const recentMoments = [
-  { title: 'Saturday morning worship', time: 'Today, 10:00am' },
-  { title: 'Quiet time', time: 'Thursday, 6:30am' },
-  { title: 'Night prayer', time: 'Tuesday, 9:15pm' },
-];
 
 function CollectionsIcon() {
   return (
@@ -46,6 +42,28 @@ function CollectionsIcon() {
       />
     </Svg>
   );
+}
+
+/** Formats an ISO date string into a short, human-friendly label. */
+function formatMomentDate(date: string): string {
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return date;
+
+  const today = new Date();
+  const isToday =
+    d.getFullYear() === today.getFullYear() &&
+    d.getMonth() === today.getMonth() &&
+    d.getDate() === today.getDate();
+
+  if (isToday) {
+    return `Today, ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  }
+
+  return d.toLocaleDateString([], {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 function Chevron() {
@@ -75,6 +93,7 @@ export function HomeScreen({
   const insets = useSafeAreaInsets();
   const { session } = useAuth();
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [moments, setMoments] = useState<Moment[]>([]);
 
   useEffect(() => {
     const userId = session?.user?.id;
@@ -90,12 +109,22 @@ export function HomeScreen({
       .catch(() => {
         // Ignore profile fetch errors; fall back to a generic greeting.
       });
+
+    listMoments(userId)
+      .then((data) => {
+        if (active) setMoments(data);
+      })
+      .catch(() => {
+        // Ignore moment fetch errors; show an empty Recent Moments row.
+      });
+
     return () => {
       active = false;
     };
   }, [session]);
 
   const greetingName = displayName ?? 'friend';
+  const recentMoments = moments.slice(0, 3);
 
   return (
     <View style={styles.container}>
@@ -149,22 +178,30 @@ export function HomeScreen({
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.recentRow}
         >
-          {recentMoments.map((moment) => (
-            <Pressable
-              key={moment.title}
-              accessibilityRole="button"
-              onPress={onOpenMoment}
-              style={styles.recentCard}
-            >
-              <View style={styles.recentCardBody}>
-                <Text style={styles.recentCardTitle} numberOfLines={1}>
-                  {moment.title}
-                </Text>
-                <Text style={styles.recentCardTime}>{moment.time}</Text>
-              </View>
-              <Chevron />
-            </Pressable>
-          ))}
+          {recentMoments.length === 0 ? (
+            <Text style={styles.recentEmpty}>
+              No moments yet. Press the orb to record your first one.
+            </Text>
+          ) : (
+            recentMoments.map((moment) => (
+              <Pressable
+                key={moment.id}
+                accessibilityRole="button"
+                onPress={onOpenMoment}
+                style={styles.recentCard}
+              >
+                <View style={styles.recentCardBody}>
+                  <Text style={styles.recentCardTitle} numberOfLines={1}>
+                    {moment.title}
+                  </Text>
+                  <Text style={styles.recentCardTime}>
+                    {formatMomentDate(moment.date)}
+                  </Text>
+                </View>
+                <Chevron />
+              </Pressable>
+            ))
+          )}
         </ScrollView>
       </ScrollView>
 
@@ -252,6 +289,12 @@ const styles = StyleSheet.create({
   recentRow: {
     gap: 14,
     paddingRight: 28,
+  },
+  recentEmpty: {
+    fontFamily: fonts.ui,
+    fontSize: 14,
+    color: colors.textSecondary,
+    paddingVertical: 24,
   },
   recentCard: {
     width: 292,
