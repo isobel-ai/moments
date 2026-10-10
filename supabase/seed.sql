@@ -89,25 +89,33 @@ values (
 on conflict do nothing;
 
 insert into
-    public.moment_prayers (moment_id, content)
+    public.moment_notes (moment_id, kind, is_during_recording, timestamp, content)
 values (
         '10000000-0000-0000-0000-000000000001',
+        'prayer',
+        false,
+        null,
         'Lord, help me to be still and know that you are God.'
     )
 on conflict do nothing;
 
 insert into
-    public.moment_revelations (moment_id, content)
+    public.moment_notes (moment_id, kind, is_during_recording, timestamp, content)
 values (
         '10000000-0000-0000-0000-000000000001',
+        'revelation',
+        false,
+        null,
         'Stillness is not emptiness — it is presence.'
     )
 on conflict do nothing;
 
 insert into
-    public.moment_highlights (moment_id, timestamp, note)
+    public.moment_notes (moment_id, kind, is_during_recording, timestamp, content)
 values (
         '10000000-0000-0000-0000-000000000001',
+        'highlight',
+        true,
         42,
         'The moment of stillness'
     )
